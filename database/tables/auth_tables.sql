@@ -10,3 +10,4 @@ create table accounts(
 	create_at timestamptz default now(),
 	updated_at timestamptz
 )
+
