@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.backend.config.MessageSourceConfig;
+import org.example.backend.config.MessageService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -22,21 +22,21 @@ import static org.example.backend.common.MessageKeys.ERROR_UNAUTHORIZED_DETAILS;
 @Component
 @RequiredArgsConstructor
 public class AuthEntryPointJWT implements AuthenticationEntryPoint {
-    private final MessageSourceConfig messageConfig;
+    private final MessageService messageService;
 
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        log.error(messageConfig.getMessage(ERROR_UNAUTHORIZED_DETAILS, authException.getMessage()));
+        log.error(messageService.getMessage(ERROR_UNAUTHORIZED_DETAILS, authException.getMessage()));
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
         final Map<String, Object> body = new HashMap<>();
         body.put("status", HttpServletResponse.SC_UNAUTHORIZED);
-        body.put("error", messageConfig.getMessage(ERROR_UNAUTHORIZED));
-        body.put("message", messageConfig.getMessage(ERROR_UNAUTHORIZED));
+        body.put("error", messageService.getMessage(ERROR_UNAUTHORIZED));
+        body.put("message", messageService.getMessage(ERROR_UNAUTHORIZED));
         body.put("path", request.getServletPath());
 
         final ObjectMapper mapper = new ObjectMapper();
