@@ -9,8 +9,8 @@ as $$
 declare
 	v_user_id uuid := gen_random_uuid();
 begin
-	insert into users(id, full_name, phone)
-	values (v_user_id, p_full_name, p_phone);
+	insert into users(id, fullname, phone)
+	values (v_user_id, p_fullname, p_phone);
 
 	insert into accounts(id, user_id, password_hash)
 	values (gen_random_uuid(), v_user_id, p_pass);
