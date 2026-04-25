@@ -41,7 +41,7 @@ public class BaseEntity {
     }
 
     public boolean isDeleted() {
-        return Objects.isNull(this.deletedAt);
+        return !Objects.isNull(this.deletedAt);
     }
 
     @Override
