@@ -2,17 +2,11 @@ package org.example.backend.modules.identity.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.EqualsAndHashCode;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.example.backend.common.BaseEntity;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.Where;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -28,6 +22,9 @@ public class User extends BaseEntity {
 
     @Column(name = "email", unique = true, length = 100)
     private String email;
+
+    @Column(name = "ekyc_status", nullable = false)
+    private String ekycStatus;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
