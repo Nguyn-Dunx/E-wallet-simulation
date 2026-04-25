@@ -1,41 +1,32 @@
-create or replace procedure register_user_account(
-    p_full_name varchar,
-    p_phone varchar,
-    p_pass text
-)
-language plpgsql
-as $$
-declare
-    v_account_id uuid := gen_random_uuid();
-    v_role_id smallint;
-begin
-    -- 1. Lấy role USER
-    select id into v_role_id
-    from role
-    where name = 'USER';
+create table accounts (
+    id uuid not null primary key default gen_random_uuid(),
+    login_key varchar(20) not null unique,
+    password_hash text not null,
+    status varchar(20) not null default 'ACTIVE',
+    login_failed_count int not null default 0,
+    password_change_at timestamptz,
+    created_at timestamptz default now(),
+    updated_at timestamptz,
+    deleted_at timestamptz
+);
 
-    if v_role_id is null then
-        raise exception 'Role USER does not exist!';
-    end if;
+create table role (
+    id smallserial not null primary key,
+    name varchar not null
+);
 
-    -- 2. Insert account (root entity)
-    insert into accounts(id, password_hash)
-    values (v_account_id, p_pass);
+create table account_role (
+    id uuid not null primary key default gen_random_uuid(),
+    account_id uuid not null unique references accounts(id),
+    role_id smallint not null references role(id)
+);
 
-    -- 3. Insert user (extension của account)
-    insert into users(id, full_name, phone)
-    values (v_account_id, p_full_name, p_phone);
-
-    -- 4. Gán role
-    insert into account_role(id, account_id, role_id)
-    values (gen_random_uuid(), v_account_id, v_role_id);
-
-    raise notice 'Registration successful for Account ID: %', v_account_id;
-
-exception
-    when unique_violation then
-        raise exception 'Phone number already exists or duplicate data!';
-    when others then
-        raise exception 'System error during registration: %', SQLERRM;
-end;
-$$;
+create table admin (
+    id uuid not null primary key references accounts(id),
+    employee_code varchar(20) not null unique,
+    department varchar(100),
+    internal_note text,
+    created_at timestamptz default now(),
+    updated_at timestamptz,
+    deleted_at timestamptz
+);
