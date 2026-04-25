@@ -14,6 +14,7 @@ create table role(
 )
 
 create table account_role(
+	id uuid not null primary key default gen_randmon_uuid(),
 	account_id uuid not null unique references accounts(id),
 	role_id smallint not null references role(id)
 )
