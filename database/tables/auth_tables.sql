@@ -8,3 +8,19 @@ create table accounts(
 	updated_at timestamptz
 )
 
+create table role(
+	id smallserial not null primary key,
+	name varchar not null
+)
+
+create table account_role(
+	account_id uuid not null unique references accounts(id),
+	role_id smallint not null unique references role(id)
+)
+
+create table admin(
+	id uuid not null primary key references accounts(id),
+	employee_code varchar(20) not null unique,
+	department varchar(100),
+	internal_note text
+)
