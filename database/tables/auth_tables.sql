@@ -4,8 +4,9 @@ create table accounts(
 	status varchar(20) not null default 'ACTIVE',
 	login_failed_count int not null default 0,
 	password_change_at timestamptz,
-	create_at timestamptz default now(),
-	updated_at timestamptz
+	created_at timestamptz default now(),
+	updated_at timestamptz,
+	deleted_at timestamptz
 )
 
 create table role(
@@ -23,5 +24,8 @@ create table admin(
 	id uuid not null primary key references accounts(id),
 	employee_code varchar(20) not null unique,
 	department varchar(100),
-	internal_note text
+	internal_note text,
+	created_at timestamptz default now(),
+	updated_at timestamptz,
+	deleted_at timestamptz
 )
