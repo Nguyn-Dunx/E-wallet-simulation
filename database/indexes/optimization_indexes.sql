@@ -1,7 +1,10 @@
 create unique index idx_unique_phone
 on users(phone)
-where updated_at is not null;
+where deleted_at is null;
 
-create index idx_phone_account
-on accounts(user_id)
-include (password_hash);
+create unique index idx_unique_account_id
+on account_role(account_id)
+include (role_id);
+
+create unique index idx_unique_employee_code
+on admin(employee_code);
