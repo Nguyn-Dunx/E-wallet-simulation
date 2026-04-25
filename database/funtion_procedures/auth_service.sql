@@ -19,8 +19,8 @@ begin
     end if;
 
     -- 2. Insert account (root entity)
-    insert into accounts(id, password_hash)
-    values (v_account_id, p_pass);
+    insert into accounts(id, login_key, password_hash)
+    values (v_account_id, p_phone, p_pass);
 
     -- 3. Insert user (extension của account)
     insert into users(id, full_name, phone)
