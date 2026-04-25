@@ -15,7 +15,7 @@ create table role(
 
 create table account_role(
 	account_id uuid not null unique references accounts(id),
-	role_id smallint not null unique references role(id)
+	role_id smallint not null references role(id)
 )
 
 create table admin(
