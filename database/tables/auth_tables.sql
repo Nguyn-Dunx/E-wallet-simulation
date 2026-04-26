@@ -17,6 +17,7 @@ create table accounts (
     status varchar(20) not null default 'ACTIVE', -- ACTIVE | LOCKED | DISABLED
     login_failed_count int not null default 0,
     password_change_at timestamptz,
+    token_version int not null default 0,
 
     created_at timestamptz not null default now(),
     updated_at timestamptz,
