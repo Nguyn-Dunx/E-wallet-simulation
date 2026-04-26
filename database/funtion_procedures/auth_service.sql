@@ -18,23 +18,39 @@ begin
         raise exception 'Role USER does not exist!';
     end if;
 
-    -- 2. Insert account (root entity)
-    insert into accounts(id, login_key, password_hash)
-    values (v_account_id, p_phone, p_pass);
+    -- 2. Insert account
+    insert into accounts(
+        id,
+        login_key,
+        login_type,
+        password_hash,
+        role_id
+    )
+    values (
+        v_account_id,
+        p_phone,
+        'PHONE',
+        p_pass,
+        v_role_id
+    );
 
-    -- 3. Insert user (extension của account)
-    insert into users(id, full_name, phone)
-    values (v_account_id, p_full_name, p_phone);
-
-    -- 4. Gán role
-    insert into account_role(id, account_id, role_id)
-    values (gen_random_uuid(), v_account_id, v_role_id);
+    -- 3. Insert user
+    insert into users(
+        id,
+        full_name,
+        phone
+    )
+    values (
+        v_account_id,
+        p_full_name,
+        p_phone
+    );
 
     raise notice 'Registration successful for Account ID: %', v_account_id;
 
 exception
     when unique_violation then
-        raise exception 'Phone number already exists or duplicate data!';
+        raise exception 'Phone already exists!';
     when others then
         raise exception 'System error during registration: %', SQLERRM;
 end;
