@@ -1,41 +1,25 @@
-create or replace procedure register_user_account(
-    p_full_name varchar,
-    p_phone varchar,
-    p_pass text
-)
-language plpgsql
-as $$
-declare
-    v_account_id uuid := gen_random_uuid();
-    v_role_id smallint;
-begin
-    -- 1. Lấy role USER
-    select id into v_role_id
-    from role
-    where name = 'USER';
+-- ROLE
+create table role (
+    id smallserial primary key,
+    name varchar(50) not null unique
+);
 
-    if v_role_id is null then
-        raise exception 'Role USER does not exist!';
-    end if;
+-- ACCOUNTS
+create table accounts (
+    id uuid primary key default gen_random_uuid(),
 
-    -- 2. Insert account (root entity)
-    insert into accounts(id, password_hash)
-    values (v_account_id, p_pass);
+    login_key varchar(50) not null unique,
+    login_type varchar(20) not null, -- PHONE | EMPLOYEE_CODE
 
-    -- 3. Insert user (extension của account)
-    insert into users(id, full_name, phone)
-    values (v_account_id, p_full_name, p_phone);
+    password_hash text not null,
+    role_id smallint not null references role(id),
 
-    -- 4. Gán role
-    insert into account_role(id, account_id, role_id)
-    values (gen_random_uuid(), v_account_id, v_role_id);
+    status varchar(20) not null default 'ACTIVE', -- ACTIVE | LOCKED | DISABLED
+    login_failed_count int not null default 0,
+    password_change_at timestamptz,
+    token_version int not null default 0,
 
-    raise notice 'Registration successful for Account ID: %', v_account_id;
-
-exception
-    when unique_violation then
-        raise exception 'Phone number already exists or duplicate data!';
-    when others then
-        raise exception 'System error during registration: %', SQLERRM;
-end;
-$$;
+    created_at timestamptz not null default now(),
+    updated_at timestamptz,
+    deleted_at timestamptz
+);
