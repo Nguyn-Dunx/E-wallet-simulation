@@ -29,4 +29,5 @@ public final class MessageKeys {
     public static final String ERROR_EMAIL_EXISTS = "error.email.exists";
     public static final String ERROR_NOT_FOUND = "error.not.found";
     public static final String ERROR_NO_RECORDS = "error.no.records";
+    public static final String ERROR_USERNAME_NOT_FOUND =  "error.username.not.found";
 }

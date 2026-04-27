@@ -1,8 +1,6 @@
 package org.example.backend.modules.identity.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,8 +11,12 @@ import org.example.backend.common.BaseEntity;
 @Setter
 @Table(name = "users", schema = "public")
 public class User extends BaseEntity {
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "id")
+    private Account account;
 
-    @Column(name = "fullname",length = 100, nullable = false)
+    @Column(name = "full_name",length = 100, nullable = false)
     private String fullName;
 
     @Column(name = "phone",length = 20, unique = true, nullable = false)
