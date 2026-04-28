@@ -1,6 +1,5 @@
 package org.example.backend.security;
 
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -17,6 +16,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.example.backend.common.MessageKeys.ERROR_JWT_INVALID_TOKEN;
 
@@ -24,6 +24,7 @@ import static org.example.backend.common.MessageKeys.ERROR_JWT_INVALID_TOKEN;
 @Slf4j
 @RequiredArgsConstructor
 public class JwtUtils {
+
     private final MessageService messageService;
     private final JwtProperties jwtProperties;
     private SecretKey key;
@@ -34,14 +35,22 @@ public class JwtUtils {
     }
 
     public String generateToken(Authentication authentication, Integer version) {
-        final String username = authentication.getName();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        final String username = userDetails.getUsername();
+        final UUID userId = userDetails.getId();
+
         final List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+
         final Date now = new Date();
         final Date expiry = new Date(jwtProperties.getJwtExpirationMs() + now.getTime());
+
         return Jwts.builder()
                 .subject(username)
+                .claim("uid", userId.toString())
                 .claim("roles", roles)
                 .claim("ver", version)
                 .issuedAt(now)
@@ -72,12 +81,14 @@ public class JwtUtils {
         return parseClaims(token).getSubject();
     }
 
+    public UUID getUserId(String token) {
+        String uid = parseClaims(token).get("uid", String.class);
+        return UUID.fromString(uid);
+    }
+
     public List<String> getRoles(String token) {
         List<?> roles = parseClaims(token).get("roles", List.class);
-
-        return roles.stream()
-                .map(Object::toString)
-                .toList();
+        return roles.stream().map(Object::toString).toList();
     }
 
     public Integer getVersion(String token) {

@@ -25,8 +25,15 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Modifying
     @Query("""
         update Account a
-        set a.tokenVersion = a.tokenVersion + 1 
+        set a.tokenVersion = a.tokenVersion + 1
         where a.loginKey = :loginKey
     """)
     int increaseTokenVersion(@Param("loginKey") String loginKey);
+
+    @Query("""
+    select a.tokenVersion
+    from Account a
+    where a.loginKey = :loginKey
+""")
+    Optional<Integer> findTokenVersion(@Param("loginKey") String loginKey);
 }
