@@ -4,7 +4,7 @@ package org.example.backend.modules.identity.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.backend.common.enums.RoleName;
+import org.example.backend.modules.identity.common.RoleName;
 
 @Entity
 @Table(name = "role")

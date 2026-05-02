@@ -1,4 +1,4 @@
-package org.example.backend.common.enums;
+package org.example.backend.modules.identity.common;
 
 public enum LoginType {
     PHONE,
