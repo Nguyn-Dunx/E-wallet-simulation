@@ -1,11 +1,11 @@
-package org.example.backend.common.enums;
+package org.example.backend.security.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum RoleName {
+public enum  RoleName {
     USER(1),
     ADMIN(2);
 

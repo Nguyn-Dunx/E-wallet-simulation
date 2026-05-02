@@ -11,7 +11,7 @@ declare
 begin
     -- 1. Lấy role USER
     select id into v_role_id
-    from role
+    from identity.role
     where name = 'USER';
 
     if v_role_id is null then
@@ -19,7 +19,7 @@ begin
     end if;
 
     -- 2. Insert account
-    insert into accounts(
+    insert into identity.accounts(
         id,
         login_key,
         login_type,
@@ -35,7 +35,7 @@ begin
     );
 
     -- 3. Insert user
-    insert into users(
+    insert into identity.users(
         id,
         full_name,
         phone
