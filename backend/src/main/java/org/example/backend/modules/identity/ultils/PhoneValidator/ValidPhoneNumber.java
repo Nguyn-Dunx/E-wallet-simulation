@@ -1,4 +1,4 @@
-package org.example.backend.common.utils.PhoneValidator;
+package org.example.backend.modules.identity.ultils.PhoneValidator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

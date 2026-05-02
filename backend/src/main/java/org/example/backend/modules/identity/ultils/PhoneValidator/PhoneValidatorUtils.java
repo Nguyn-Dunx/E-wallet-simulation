@@ -1,4 +1,4 @@
-package org.example.backend.common.utils.PhoneValidator;
+package org.example.backend.modules.identity.ultils.PhoneValidator;
 
 public class PhoneValidatorUtils {
     private static final String PHONE_REGEX = "^(0|+84)(3|5|7|8|9)\\d{8}";

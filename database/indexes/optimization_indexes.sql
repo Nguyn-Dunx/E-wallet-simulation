@@ -19,7 +19,3 @@ on accounts(role_id);
 create index idx_accounts_not_deleted
 on accounts(id)
 where deleted_at is null;
-
--- FK indexes
-create index idx_users_id on users(id);
-create index idx_admin_id on admin(id);

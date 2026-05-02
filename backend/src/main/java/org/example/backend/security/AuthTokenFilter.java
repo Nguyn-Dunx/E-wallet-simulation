@@ -8,9 +8,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.backend.common.utils.JwtUtils;
 import org.example.backend.config.MessageService;
 import org.example.backend.modules.identity.repository.AccountRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -95,7 +97,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     ) {
 
         var authorities = roles.stream()
-                .map(org.springframework.security.core.authority.SimpleGrantedAuthority::new)
+                .map(SimpleGrantedAuthority::new)
                 .toList();
 
         UserDetailsImpl userDetails = new UserDetailsImpl(
