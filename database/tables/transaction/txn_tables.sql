@@ -21,5 +21,6 @@ CREATE TABLE txn.transactions (
     status txn.trans_status DEFAULT 'PENDING',
     description TEXT,
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    deleted_at timestamptz
 );

@@ -7,15 +7,18 @@ CREATE TABLE wallet.wallets (
     status VARCHAR(20) DEFAULT 'ACTIVE',
     version INT DEFAULT 0, -- Chống Race Condition
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    deleted_at timestamptz
 );
 
 -- Table: linked_sources
 CREATE TABLE wallet.linked_sources (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_id UUID NOT NULL,
     bank_name VARCHAR(50) NOT NULL,
     account_number VARCHAR(20) NOT NULL,
     status VARCHAR(20) DEFAULT 'VERIFIED',
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    deleted_at timestamptz
 );

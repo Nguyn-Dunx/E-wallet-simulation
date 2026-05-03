@@ -1,13 +1,6 @@
--- ==========================================
--- A. UNIQUE CONSTRAINTS
--- ==========================================
-ALTER TABLE identity.role ADD CONSTRAINT uq_role_name UNIQUE (name);
-ALTER TABLE identity.accounts ADD CONSTRAINT uq_accounts_login_key UNIQUE (login_key);
-ALTER TABLE identity.users ADD CONSTRAINT uq_users_phone UNIQUE (phone);
-ALTER TABLE identity.admin ADD CONSTRAINT uq_admin_employee_code UNIQUE (employee_code);
 
 -- ==========================================
--- B. FOREIGN KEYS (Khóa ngoại)
+--  FOREIGN KEYS (Khóa ngoại)
 -- ==========================================
 -- Account trỏ tới Role
 ALTER TABLE identity.accounts 
@@ -21,7 +14,7 @@ ALTER TABLE identity.admin
 ADD CONSTRAINT fk_admin_account FOREIGN KEY (id) REFERENCES identity.accounts(id) ON DELETE CASCADE;
 
 -- ==========================================
--- C. CHECK CONSTRAINTS (Bảo vệ Logic Nghiệp vụ)
+--  CHECK CONSTRAINTS (Bảo vệ Logic Nghiệp vụ)
 -- ==========================================
 -- 1. Ép kiểu đăng nhập chỉ được nằm trong danh sách cho phép
 ALTER TABLE identity.accounts

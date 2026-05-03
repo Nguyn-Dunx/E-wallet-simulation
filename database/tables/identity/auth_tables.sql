@@ -1,14 +1,16 @@
 -- ROLE
 CREATE TABLE identity.role (
     id SMALLSERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL
+    name VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- ACCOUNTS
 CREATE TABLE identity.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    login_key VARCHAR(50) NOT NULL,
-    login_type VARCHAR(20) NOT NULL,
+
+    login_key VARCHAR(50) NOT NULL UNIQUE,
+    login_type VARCHAR(20) NOT NULL,  -- PHONE | EMPLOYEE_CODE
+
     password_hash TEXT NOT NULL,
     role_id SMALLINT NOT NULL,
     

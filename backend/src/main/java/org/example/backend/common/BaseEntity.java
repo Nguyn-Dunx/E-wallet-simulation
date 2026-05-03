@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 public class BaseEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     protected UUID id;
 
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -29,6 +29,7 @@ public class BaseEntity {
     @PrePersist
     protected void prePersist() {
         this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
     @PreUpdate
