@@ -13,4 +13,5 @@ public interface WalletRepository {
 
     Optional<Wallet> findByIdAndDeletedAtIsNull(UUID id);
 
+    Wallet save(Wallet newWallet);
 }
