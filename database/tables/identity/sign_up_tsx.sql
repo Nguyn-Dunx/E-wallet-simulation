@@ -10,7 +10,15 @@ AS $$
 DECLARE
     v_account_id UUID;
     v_role_user_id SMALLINT;
+    w_id UUID := gen_random_uuid();
 BEGIN
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RAISE EXCEPTION 'Phone is required';
+    END IF;
+    
+    IF p_password_hash IS NULL THEN
+        RAISE EXCEPTION 'Password is required';
+    END IF;
     -- 1. Lấy role USER
     SELECT id INTO v_role_user_id
     FROM identity.role
@@ -49,17 +57,19 @@ BEGIN
 
     -- 4. Tạo wallet
     INSERT INTO wallet.wallets (
+        id,
         user_id
     )
     VALUES (
+        w_id,
         v_account_id
     );
 
     RETURN v_account_id;
 
 EXCEPTION
-    WHEN unique_violation THEN
-        RAISE EXCEPTION 'Phone already exists';
+   WHEN unique_violation THEN
+        RAISE EXCEPTION 'Duplicate data';
     WHEN OTHERS THEN
         RAISE EXCEPTION 'Signup user failed: %', SQLERRM;
 END;
