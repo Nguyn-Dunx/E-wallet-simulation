@@ -4,11 +4,13 @@ CREATE TABLE identity.role (
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
+INSERT INTO identity.role(name) VALUES ('USER'), ('ADMIN');
+
 -- ACCOUNTS
 CREATE TABLE identity.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    login_key VARCHAR(50) NOT NULL UNIQUE,
+    login_key VARCHAR(50) NOT NULL,
     login_type VARCHAR(20) NOT NULL,  -- PHONE | EMPLOYEE_CODE
 
     password_hash TEXT NOT NULL,

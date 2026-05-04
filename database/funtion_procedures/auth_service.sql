@@ -46,6 +46,14 @@ begin
         p_phone
     );
 
+    -- 4. Tạo wallet
+    INSERT INTO wallet.wallets(
+        user_id
+    )
+    VALUES (
+        v_account_id
+    );
+
     raise notice 'Registration successful for Account ID: %', v_account_id;
 
 exception
