@@ -1,31 +1,40 @@
 spring:
   config:
     import: optional:file:.env[.properties]
+
   application:
     name: e-wallet
+
   jackson:
     date-format: 'dd.MM.yyyy'
+
   output:
     ansi:
       enabled: always
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: none
+
     show-sql: false
     open-in-view: false
+
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   flyway:
     enabled: true
     placeholder-replacement: false
     baseline-on-migrate: true
+
   servlet:
     multipart:
       max-file-size: 1MB
@@ -34,6 +43,7 @@ spring:
 logging:
   file:
     name: './logs/application.log'
+
   logback:
     rollingpolicy:
       max-file-size: 10MB
@@ -52,9 +62,10 @@ server:
     include-binding-errors: always
     include-stacktrace: never
     include-exception: false
+
   port: 8080
 
 app:
   security:
     jwtSecret: ${JWT_SECRET}
-    jwtExpirationMs: ${JWT_EXPIRATION_MS}
+    jwtExpirationMs: 900000

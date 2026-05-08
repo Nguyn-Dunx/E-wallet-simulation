@@ -5,11 +5,12 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.backend.common.BaseEntity;
+import org.example.backend.modules.identity.common.enums.EkycStatus;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "users", schema = "public")
+@Table(name = "users", schema = "identity")
 public class User extends BaseEntity {
     @OneToOne
     @MapsId
@@ -22,11 +23,9 @@ public class User extends BaseEntity {
     @Column(name = "phone",length = 20, unique = true, nullable = false)
     private String phone;
 
-    @Column(name = "email", unique = true, length = 100)
-    private String email;
-
+    @Enumerated(EnumType.STRING)
     @Column(name = "ekyc_status", nullable = false)
-    private String ekycStatus;
+    private EkycStatus ekycStatus;
 
     @Column(name = "avatar_url")
     private String avatarUrl;

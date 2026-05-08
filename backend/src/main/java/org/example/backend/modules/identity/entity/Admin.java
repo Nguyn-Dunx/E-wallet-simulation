@@ -8,7 +8,7 @@ import org.example.backend.common.BaseEntity;
 @Entity
 @Getter
 @Setter
-@Table(name = "admin")
+@Table(name = "admin", schema = "identity")
 public class Admin extends BaseEntity {
     @OneToOne
     @MapsId
