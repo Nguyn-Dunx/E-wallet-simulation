@@ -73,5 +73,12 @@ public class WalletInternalServiceImpl implements WalletInternalService{
         return walletRepository.save(wallet);   // *Jpa will check @Version here
     }
 
+    @Override
+    public Wallet getWalletEntityByUserId(UUID userId) {
+
+        return walletRepository.findByUserIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+    }
+
 
 }

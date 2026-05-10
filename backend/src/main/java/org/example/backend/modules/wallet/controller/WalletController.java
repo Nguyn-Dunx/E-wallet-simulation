@@ -33,7 +33,7 @@ public class WalletController {
 
            UUID userId = user.getId();
          */
-        UUID mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        UUID mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174111");
 
         WalletResponse response = walletService.getMyWallet(mockUserId);
 
