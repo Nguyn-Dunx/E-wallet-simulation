@@ -34,7 +34,11 @@ public class SecurityConfig {
     private final AuthTokenFilter authTokenFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
-    private static final String[] AUTH_WHITELIST = {};
+    private static final String[] AUTH_WHITELIST = {
+            "/api/v1/auth/login",
+            "/api/v1/auth/users/signup",
+            "/api/v1/auth/admins/signup"
+    };
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -68,7 +72,7 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(AUTH_WHITELIST).permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

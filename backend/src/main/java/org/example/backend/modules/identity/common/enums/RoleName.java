@@ -1,5 +1,5 @@
 
-package org.example.backend.security.enums;
+package org.example.backend.modules.identity.common.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

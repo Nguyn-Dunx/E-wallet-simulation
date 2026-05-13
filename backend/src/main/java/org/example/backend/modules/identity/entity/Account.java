@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.backend.common.BaseEntity;
-import org.example.backend.modules.identity.enums.LoginType;
+import org.example.backend.modules.identity.common.enums.LoginType;
 
 @Entity
-@Table(name = "accounts", schema = "public")
+@Table(name = "accounts", schema = "identity")
 @Getter
 @Setter
 public class Account extends BaseEntity {
@@ -34,10 +34,18 @@ public class Account extends BaseEntity {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @OneToOne(mappedBy = "account")
+    @OneToOne(
+            mappedBy = "account",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private User user;
 
-    @OneToOne(mappedBy = "account")
+    @OneToOne(
+            mappedBy = "account",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private Admin admin;
 
 }

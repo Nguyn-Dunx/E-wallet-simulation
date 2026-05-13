@@ -4,10 +4,10 @@ package org.example.backend.modules.identity.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.backend.security.enums.RoleName;
+import org.example.backend.modules.identity.common.enums.RoleName;
 
 @Entity
-@Table(name = "role")
+@Table(name = "role", schema = "identity")
 @Getter
 @Setter
 public class Role {
