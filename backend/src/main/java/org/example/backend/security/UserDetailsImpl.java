@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.example.backend.modules.identity.common.enums.LoginType;
 import org.example.backend.modules.identity.entity.Account;
 import org.springframework.security.core.GrantedAuthority;

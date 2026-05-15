@@ -17,7 +17,7 @@ import org.example.backend.config.MessageService;
 import org.example.backend.security.JwtProperties;
 import org.example.backend.security.UserDetailsImpl;
 
-import org.flywaydb.core.internal.util.StringUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;

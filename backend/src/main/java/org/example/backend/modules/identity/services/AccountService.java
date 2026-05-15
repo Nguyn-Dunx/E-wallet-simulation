@@ -4,23 +4,23 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.common.dto.ApiResponse;
 import org.example.backend.common.exception.ElementAlreadyExistsException;
+import org.example.backend.common.utils.JwtUtils;
 import org.example.backend.modules.identity.common.enums.EkycStatus;
 import org.example.backend.modules.identity.common.enums.LoginType;
 import org.example.backend.modules.identity.common.enums.RoleName;
 import org.example.backend.modules.identity.common.utils.OtpUtils;
+import org.example.backend.modules.identity.dto.request.ChangePasswordRequest;
 import org.example.backend.modules.identity.dto.request.SignupAdminRequest;
 import org.example.backend.modules.identity.dto.request.SignupUserRequest;
 import org.example.backend.modules.identity.dto.response.CommandResponse;
 import org.example.backend.modules.identity.entity.*;
-import org.example.backend.modules.identity.repository.AccountRepository;
-import org.example.backend.modules.identity.repository.PendingUserRepository;
-import org.example.backend.modules.identity.repository.ResetPasswordSessionRepo;
-import org.example.backend.modules.identity.repository.RoleRepository;
+import org.example.backend.modules.identity.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,11 +32,12 @@ public class AccountService {
     private final PendingUserRepository pendingUserRepository;
     private final OtpUtils otpUtils;
     private final ResetPasswordSessionRepo sessionRepository;
+    private final JwtUtils jwtUtils;
+    private final TokenBlacklistService tokenBlacklistService;
 
 
     @Transactional
     public ApiResponse<String> initSignupUser(SignupUserRequest request) {
-        // Kiểm tra xem số điện thoại đã là thành viên chính thức chưa
         if (accountRepository.existsByLoginKeyIgnoreCase(request.getLoginKey())) {
             throw new ElementAlreadyExistsException("Account existed!");
         }
@@ -45,10 +46,8 @@ public class AccountService {
             throw new IllegalArgumentException("Password is not matching");
         }
 
-        // Sinh OTP ngẫu nhiên 6 số
         String otpCode = otpUtils.createOtp();
 
-        // Tìm xem thằng này có đang đăng ký dở không, có thì ghi đè, không thì tạo mới
         PendingUser pendingUser = pendingUserRepository.findById(request.getLoginKey())
                 .orElse(new PendingUser());
 
@@ -153,5 +152,32 @@ public class AccountService {
                 "Reset password successfully",
                 null
         );
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public ApiResponse<String> changeUserPassword(ChangePasswordRequest request, String loginKey , String token) {
+        Account account = accountRepository.findAuthAccount(loginKey)
+                .orElseThrow(() -> new RuntimeException("Not found account"));
+
+        if (!passwordEncoder.encode(request.getOldPassword()).equals(account.getPasswordHash())) {
+            throw new RuntimeException("Current password is not match");
+        }
+
+        if (passwordEncoder.encode(request.getNewPassword()).equals(account.getPasswordHash())) {
+            throw new RuntimeException("New password must be not match old password");
+        }
+
+        account.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        UUID userId = account.getUser().getId();
+        account.setTokenVersion(account.getTokenVersion() + 1);
+
+        accountRepository.save(account);
+
+        UUID jti = jwtUtils.getJti(token);
+        if (jti != null) {
+            tokenBlacklistService.blacklist(jti, userId, null);
+        }
+
+        return ApiResponse.success(HttpStatus.OK, "Change password successfully. Please re-login", null);
     }
 }

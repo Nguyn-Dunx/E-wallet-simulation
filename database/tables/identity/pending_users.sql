@@ -26,8 +26,8 @@ on pending_users(phone_number, created_at);
 CREATE TABLE token_blacklist (
     jti UUID PRIMARY KEY,
     user_id UUID NOT NULL,
-    expired_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    expired_at TIMESTAMP,
+    created_at TIMESTAMP
 );
 
 CREATE INDEX idx_token_blacklist_user_id

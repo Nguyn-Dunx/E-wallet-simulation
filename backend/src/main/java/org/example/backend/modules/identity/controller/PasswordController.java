@@ -41,4 +41,5 @@ public class PasswordController {
         ApiResponse<String> response = accountService.resetUserPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(response);
     }
+
 }

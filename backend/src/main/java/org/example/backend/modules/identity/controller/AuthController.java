@@ -5,20 +5,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.common.dto.ApiResponse;
 import org.example.backend.common.utils.JwtUtils;
-import org.example.backend.modules.identity.dto.request.LoginRequest;
-import org.example.backend.modules.identity.dto.request.SignupAdminRequest;
-import org.example.backend.modules.identity.dto.request.SignupUserRequest;
-import org.example.backend.modules.identity.dto.request.VerifyOtpRequest;
+import org.example.backend.modules.identity.dto.request.*;
 import org.example.backend.modules.identity.dto.response.CommandResponse;
 import org.example.backend.modules.identity.dto.response.JwtResponse;
 import org.example.backend.modules.identity.services.AccountService;
 import org.example.backend.modules.identity.services.AuthService;
+import org.example.backend.security.UserDetailsImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -81,6 +77,18 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/users/change-password")
+    public ResponseEntity<ApiResponse<String>> changeUserPassword(
+            @RequestHeader("Authorization") String bearerToken,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        String token = bearerToken.substring(7);
+
+        ApiResponse<String> response = accountService.changeUserPassword(request, userDetails.getUsername(), token);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
