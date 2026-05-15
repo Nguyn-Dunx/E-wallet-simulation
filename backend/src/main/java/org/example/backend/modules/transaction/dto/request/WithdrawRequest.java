@@ -11,6 +11,8 @@ import java.util.UUID;
 public class WithdrawRequest {
     @NotNull
     private UUID sourceId;
-    @NotNull @DecimalMin("1000.0") private BigDecimal amount;
+    @NotNull @DecimalMin("1000.0")
+    private BigDecimal amount;
+
     private String description;
 }

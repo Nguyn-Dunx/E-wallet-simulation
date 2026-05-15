@@ -7,6 +7,7 @@ import org.example.backend.modules.transaction.dto.response.TransactionResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public interface TransactionService {
@@ -14,6 +15,7 @@ public interface TransactionService {
 
     // Sao kê giao dịch có phân trang
     Page<TransactionResponse> getMyTransactionHistory(UUID userId, Pageable pageable);
+    Page<TransactionResponse> getMyTransactionHistory(UUID userId, Instant startDate, Instant endDate, Pageable pageable);
 
     // Xem chi tiết một giao dịch
     TransactionResponse getTransactionDetail(UUID userId, String txnCode);

@@ -3,6 +3,7 @@ package org.example.backend.modules.wallet.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.common.dto.ApiResponse;
+import org.example.backend.common.utils.SecurityUtils;
 import org.example.backend.modules.wallet.dto.request.LinkBankRequest;
 import org.example.backend.modules.wallet.dto.response.LinkedSourceResponse;
 import org.example.backend.modules.wallet.dto.response.WalletResponse;
@@ -18,24 +19,13 @@ import java.util.UUID;
 public class WalletController {
 
     final WalletService walletService;
+    private final SecurityUtils securityUtils;
 
     @GetMapping("/me")
     public ResponseEntity<WalletResponse> getMyWallet() {
 
-        /*
-         * [MOCK DATA]
-         * (Chưa có JWT Security) -> tạm hard-code một UUID của user để test API trước.
-         * Sau này chỉ cần đổi thành:
-         * UUID userId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().getId();
-         *
-         * UserDetailsImpl user = (UserDetailsImpl)
-           SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-           UUID userId = user.getId();
-         */
-        UUID mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174111");
-
-        WalletResponse response = walletService.getMyWallet(mockUserId);
+        UUID userId = securityUtils.getCurrentUserId(); // get ID from Token
+        WalletResponse response = walletService.getMyWallet(userId);
 
         return ResponseEntity.ok(response); // status: 200 ok
 
@@ -43,23 +33,23 @@ public class WalletController {
 
     @GetMapping("/me/banks")
     public ResponseEntity<?> getMyLinkedBanks() {
-        UUID mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); // Mock user
-        return ResponseEntity.ok(walletService.getMyLinkedSources(mockUserId));
+        UUID userId = securityUtils.getCurrentUserId(); // Mock user
+        return ResponseEntity.ok(ApiResponse.success("Retrieve the list of banks successfully!", walletService.getMyLinkedSources(userId)));
     }
 
     @PostMapping("/me/banks")
     public ResponseEntity<ApiResponse<LinkedSourceResponse>> linkBank(
             @RequestBody @Valid LinkBankRequest request) {
-        UUID mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); // Mock user
+        UUID userId = securityUtils.getCurrentUserId();
 
-        LinkedSourceResponse data = walletService.linkBankAccount(mockUserId, request);
+        LinkedSourceResponse data = walletService.linkBankAccount(userId, request);
         return ResponseEntity.ok(ApiResponse.success("Bank account linked successfully!", data));
     }
 
     @DeleteMapping("/me/banks/{sourceId}")
     public ResponseEntity<ApiResponse<Void>> unlinkBank(@PathVariable UUID sourceId) {
-        UUID mockUserId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); // Mock user
-        walletService.unlinkBankAccount(mockUserId, sourceId);
+        UUID userId = securityUtils.getCurrentUserId();
+        walletService.unlinkBankAccount(userId, sourceId);
         return ResponseEntity.ok(ApiResponse.success(
                 "The bank account has been successfully unlinked!",null));
     }

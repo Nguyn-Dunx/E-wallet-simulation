@@ -11,6 +11,8 @@ import java.util.UUID;
 public class DepositRequest {
     @NotNull
     private UUID sourceId; // ID bank đã liên kết
-    @NotNull @DecimalMin("1000.0") private BigDecimal amount;
+    @NotNull @DecimalMin("1000.0")
+    private BigDecimal amount;
+
     private String description;
 }

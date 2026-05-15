@@ -1,6 +1,8 @@
 package org.example.backend.modules.identity.services;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.common.event.UserRegisteredEvent;
 import org.example.backend.common.exception.ElementAlreadyExistsException;
 import org.example.backend.modules.identity.common.enums.EkycStatus;
 import org.example.backend.modules.identity.common.enums.LoginType;
@@ -14,6 +16,7 @@ import org.example.backend.modules.identity.entity.Role;
 import org.example.backend.modules.identity.entity.User;
 import org.example.backend.modules.identity.repository.AccountRepository;
 import org.example.backend.modules.identity.repository.RoleRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +28,9 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
     public CommandResponse signupUser(SignupUserRequest request) {
 
         if (accountRepository.existsByLoginKeyIgnoreCase(request.getLoginKey())) {
@@ -50,6 +56,8 @@ public class AccountService {
         account.setUser(user);
 
         accountRepository.save(account);
+        // notify to common to create a wallet
+        eventPublisher.publishEvent(new UserRegisteredEvent(account.getId()));
 
         return CommandResponse.builder()
                 .message("Registering successfully")

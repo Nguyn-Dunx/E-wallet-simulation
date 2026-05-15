@@ -1,16 +1,22 @@
 package org.example.backend.modules.identity.services;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.modules.identity.dto.request.LoginRequest;
+import org.example.backend.modules.identity.dto.request.SignupUserRequest;
 import org.example.backend.modules.identity.dto.response.JwtResponse;
 import org.example.backend.common.utils.JwtUtils;
+import org.example.backend.modules.identity.repository.AccountRepository;
+import org.example.backend.modules.identity.repository.UserRepository;
 import org.example.backend.security.UserDetailsImpl;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,10 +40,11 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        int tokenVersion = 1;
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        int tokenVersion = 0;
         String token = jwtUtils.generateToken(authentication, tokenVersion);
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -54,4 +61,7 @@ public class AuthService {
                 .roles(roles)
                 .build();
     }
+
+
+
 }

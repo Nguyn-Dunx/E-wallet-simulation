@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -92,6 +93,28 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository
                 .getTransactionHistoryByWalletId(wallet.getId(), pageable)
                 .map(transactionMapper::toResponse);
+    }
+
+    @Override
+    public Page<TransactionResponse> getMyTransactionHistory(UUID userId, Instant startDate, Instant endDate, Pageable pageable) {
+
+        // 1. Từ userId, lấy ra cái ví tương ứng
+        Wallet wallet = walletInternalService.getWalletEntityByUserId(userId);
+
+        Instant finalStartDate = (startDate != null) ? startDate : Instant.EPOCH;
+
+        Instant finalEndDate = (endDate != null) ? endDate : Instant.parse("2999-12-31T23:59:59Z");
+
+        Page<Transaction> transactions = transactionRepository.getHistoryWithFilters(
+                wallet.getId(),
+                finalStartDate,
+                finalEndDate,
+                pageable
+        );
+
+
+        // 3. Map sang DTO và trả về
+        return transactions.map(transactionMapper::toResponse);
     }
 
     @Override

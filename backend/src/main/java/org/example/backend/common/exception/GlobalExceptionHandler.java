@@ -2,8 +2,10 @@ package org.example.backend.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.common.dto.ApiResponse;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -82,5 +84,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(response);
+    }
+
+    // expired/denied token
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.<Void>builder()
+                        .code(403)
+                        .message("You do not have access to this resource")
+                        .build());
+    }
+
+    // Optimistic Locking (double-spend error)
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockingFailureException.class})
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingFailureException(Exception ex) {
+        log.warn("Concurrency Conflict: Detecting disputes over wallet update data. Message: {}", ex.getMessage());
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.CONFLICT.value()) // Mã 409
+                .message("The system is currently processing another transaction (of yours). Please wait a few seconds and try again")
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 }
