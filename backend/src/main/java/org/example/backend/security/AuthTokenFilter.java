@@ -6,12 +6,12 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.common.utils.JwtUtils;
 import org.example.backend.config.MessageService;
 import org.example.backend.modules.identity.repository.AccountRepository;
 import org.example.backend.modules.identity.services.TokenBlacklistService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,17 +27,30 @@ import java.util.UUID;
 
 import static org.example.backend.common.Constants.ACCESS_TOKEN_COOKIE;
 import static org.example.backend.common.Constants.BEARER_PREFIX;
-import static org.example.backend.common.MessageKeys.ERROR_JWT_INVALID_TOKEN;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     private final MessageService messageService;
     private final JwtUtils jwtUtils;
     private final AccountRepository accountRepository;
     private final TokenBlacklistService tokenBlacklistService;
+    private final HandlerExceptionResolver exceptionResolver;
+
+    // Viết constructor thủ công thay vì @RequiredArgsConstructor để an toàn inject HandlerExceptionResolver
+    public AuthTokenFilter(
+            MessageService messageService,
+            JwtUtils jwtUtils,
+            AccountRepository accountRepository,
+            TokenBlacklistService tokenBlacklistService,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
+        this.messageService = messageService;
+        this.jwtUtils = jwtUtils;
+        this.accountRepository = accountRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
+        this.exceptionResolver = exceptionResolver;
+    }
 
     @Override
     protected void doFilterInternal(
@@ -48,17 +62,32 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         try {
             String token = resolveToken(request);
 
-            if (token != null
-                    && jwtUtils.isValid(token)
-                    && !tokenBlacklistService.isBlacklisted(jwtUtils.getJti(token))
-                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (token != null) {
+                // Ném lỗi nếu token không hợp lệ (hết hạn, sai chữ ký, format láo)
+                if (!jwtUtils.isValid(token)) {
+                    throw new RuntimeException("Invalid or expired JWT token");
+                }
 
-                processAuthentication(token, request);
+                // Ném lỗi nếu token đã bị đăng xuất / thu hồi
+                UUID jti = jwtUtils.getJti(token);
+                if (tokenBlacklistService.isBlacklisted(jti)) {
+                    throw new RuntimeException("Token has been blacklisted");
+                }
+
+                // Đủ điều kiện: Set Security Context
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                    processAuthentication(token, request);
+                }
             }
-
         } catch (Exception ex) {
-            log.warn(messageService.getMessage(ERROR_JWT_INVALID_TOKEN, ex.getMessage()));
+            log.error("JWT Filter Exception: {}", ex.getMessage());
             SecurityContextHolder.clearContext();
+
+            // CHỐT CHẶN: Đẩy lỗi về cho GlobalExceptionHandler xử lý thành JSON
+            exceptionResolver.resolveException(request, response, null, ex);
+
+            // CẮT LUỒNG: Không cho request đi tiếp vào Controller gây lỗi 500
+            return;
         }
 
         filterChain.doFilter(request, response);
@@ -85,10 +114,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private void validateTokenVersion(String username, Integer tokenVersion) {
         Integer versionInDb = accountRepository
                 .findTokenVersion(username)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("User not found in database"));
 
         if (!versionInDb.equals(tokenVersion)) {
-            throw new RuntimeException("Invalid token");
+            throw new RuntimeException("Token version is outdated. Please login again.");
         }
     }
 
@@ -134,7 +163,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String bearer = request.getHeader("Authorization");
 
         if (StringUtils.hasText(bearer) && bearer.startsWith(BEARER_PREFIX)) {
-            return bearer.substring(7);
+            return bearer.substring(BEARER_PREFIX.length());
         }
 
         if (request.getCookies() != null) {

@@ -85,7 +85,9 @@ public class AccountService {
         // 4. Mọi thứ hợp lệ -> Đưa vào bảng Account và User
         Account account = new Account();
         account.setLoginKey(pendingUser.getPhoneNumber());
-        account.setPasswordHash(pendingUser.getHashedPassword()); // Không hash lại, lấy luôn từ Pending
+        account.setPasswordHash(pendingUser.getHashedPassword());
+        account.setLoginFailedCount(0);// Không hash lại, lấy luôn từ Pending
+        account.setTokenVersion(0);
         account.setLoginType(LoginType.PHONE);
         account.setStatus("ACTIVE");
 
@@ -159,11 +161,12 @@ public class AccountService {
         Account account = accountRepository.findAuthAccount(loginKey)
                 .orElseThrow(() -> new RuntimeException("Not found account"));
 
-        if (!passwordEncoder.encode(request.getOldPassword()).equals(account.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPasswordHash())) {
             throw new RuntimeException("Current password is not match");
         }
 
-        if (passwordEncoder.encode(request.getNewPassword()).equals(account.getPasswordHash())) {
+// 2. Kiểm tra mật khẩu mới có trùng mật khẩu cũ không
+        if (passwordEncoder.matches(request.getNewPassword(), account.getPasswordHash())) {
             throw new RuntimeException("New password must be not match old password");
         }
 

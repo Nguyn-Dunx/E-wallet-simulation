@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SignupUserRequest {
+public class    SignupUserRequest {
 
     @NotBlank(message = "{validation.auth.loginKey.required}")
     private String loginKey; // phone

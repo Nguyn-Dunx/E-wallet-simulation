@@ -41,21 +41,7 @@ public class UserService {
         account.getUser().setFullName(newFullName);
         accountRepository.save(account);
 
-        UserDetailsImpl newUserDetails = new UserDetailsImpl(
-                currentUser.getId(),
-                currentUser.getUsername(),
-                currentUser.getPassword(),
-                currentUser.getLoginType(),
-                newFullName,
-                currentUser.getStatus(),
-                currentUser.getAuthorities()
-        );
-
-        UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
-                currentUser,
-                auth.getCredentials(),
-                auth.getAuthorities()
-        );
+        UsernamePasswordAuthenticationToken newAuth = getUsernamePasswordAuthenticationToken(newFullName, currentUser, auth);
         SecurityContextHolder.getContext().setAuthentication(newAuth);
 
         Integer currentTokenVersion = account.getTokenVersion();
@@ -71,5 +57,24 @@ public class UserService {
                 "Change successfully",
                 newToken
         );
+    }
+
+    private static UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(String newFullName, UserDetailsImpl currentUser, Authentication auth) {
+        UserDetailsImpl newUserDetails = new UserDetailsImpl(
+                currentUser.getId(),
+                currentUser.getUsername(),
+                currentUser.getPassword(),
+                currentUser.getLoginType(),
+                newFullName,
+                currentUser.getStatus(),
+                currentUser.getAuthorities()
+        );
+
+        UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
+                newUserDetails,
+                auth.getCredentials(),
+                auth.getAuthorities()
+        );
+        return newAuth;
     }
 }

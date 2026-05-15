@@ -86,7 +86,6 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordRequest request) {
 
         String token = bearerToken.substring(7);
-
         ApiResponse<String> response = accountService.changeUserPassword(request, userDetails.getUsername(), token);
         return ResponseEntity.ok(response);
     }

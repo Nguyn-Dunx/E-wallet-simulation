@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reset_password_sessions", schema = "identity", indexes = {
-        @Index(name = "idx_reset_token", columnList = "token")
+        @Index(name = "idx_reset_token", columnList = "token"),
 })
 @Getter
 @Setter

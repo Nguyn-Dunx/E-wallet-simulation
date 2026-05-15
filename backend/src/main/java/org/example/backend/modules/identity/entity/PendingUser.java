@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
                         name = "idx_pending_users_expired_at",
                         columnList = "expired_at"
                 )
-        }
+        },
+        schema = "identity"
 )
 @Getter
 @Setter

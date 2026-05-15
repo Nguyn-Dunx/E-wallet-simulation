@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "token_blacklist")
+@Table(name = "token_blacklist", schema = "identity")
 @Getter
 @Builder
 @NoArgsConstructor
