@@ -1,5 +1,6 @@
 package org.example.backend.common.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.common.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -82,5 +83,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage()) // Sẽ nhận được chuỗi "Không tìm thấy người dùng..."
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations().iterator().next().getMessage();
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.BAD_REQUEST.value())
+                .message(message)
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
     }
 }

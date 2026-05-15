@@ -19,6 +19,10 @@ public class SignupUserRequest {
     @Size(min = 6, max = 100)
     private String password;
 
+    @NotBlank(message = "Required")
+    @Size(min = 6, max = 100)
+    private String confirmPassword;
+
     @NotBlank(message = "{validation.user.fullName.required}")
     private String fullName;
 }

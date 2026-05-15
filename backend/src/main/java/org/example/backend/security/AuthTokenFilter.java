@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.backend.common.utils.JwtUtils;
 import org.example.backend.config.MessageService;
 import org.example.backend.modules.identity.repository.AccountRepository;
+import org.example.backend.modules.identity.services.TokenBlacklistService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,6 +36,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final MessageService messageService;
     private final JwtUtils jwtUtils;
     private final AccountRepository accountRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(
@@ -46,7 +48,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         try {
             String token = resolveToken(request);
 
-            if (token != null && jwtUtils.isValid(token)
+            if (token != null
+                    && jwtUtils.isValid(token)
+                    && !tokenBlacklistService.isBlacklisted(jwtUtils.getJti(token))
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 processAuthentication(token, request);
@@ -63,7 +67,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     // ================= CORE FLOW =================
 
     private void processAuthentication(String token, HttpServletRequest request) {
-
         String username = jwtUtils.getUsername(token);
         UUID userId = jwtUtils.getUserId(token);
         Integer tokenVersion = jwtUtils.getVersion(token);

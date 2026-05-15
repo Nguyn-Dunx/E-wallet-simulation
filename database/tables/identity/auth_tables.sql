@@ -25,3 +25,5 @@ CREATE TABLE identity.accounts (
     updated_at timestamptz,
     deleted_at timestamptz
 );
+
+
