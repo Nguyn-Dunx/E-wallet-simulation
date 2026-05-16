@@ -104,7 +104,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         List<String> roles = jwtUtils.getRoles(token);
 
-        var authentication = buildAuthentication(userId, username, roles, request);
+        var authentication = buildAuthentication(userId, username, tokenVersion, roles, request);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
@@ -124,6 +124,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private UsernamePasswordAuthenticationToken buildAuthentication(
             UUID userId,
             String username,
+            Integer tokenVersion,
             List<String> roles,
             HttpServletRequest request
     ) {
@@ -139,6 +140,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 null,
                 null,
                 null,
+                tokenVersion,
                 authorities
         );
 

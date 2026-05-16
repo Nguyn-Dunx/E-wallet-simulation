@@ -67,6 +67,7 @@ public class UserService {
                 currentUser.getLoginType(),
                 newFullName,
                 currentUser.getStatus(),
+                currentUser.getTokenVersion(),
                 currentUser.getAuthorities()
         );
 

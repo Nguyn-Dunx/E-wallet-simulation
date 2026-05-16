@@ -44,7 +44,7 @@ public class AuthService {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        int tokenVersion = 0;
+        int tokenVersion = userDetails.getTokenVersion();
         String token = jwtUtils.generateToken(authentication, tokenVersion);
 
 

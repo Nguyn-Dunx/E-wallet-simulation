@@ -1,7 +1,6 @@
 package org.example.backend.modules.identity.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.common.dto.ApiResponse;
 import org.example.backend.modules.identity.dto.request.UpdateNameRequest;
@@ -10,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/users") // Cấu hình lại base path tùy project của mày
+@RequestMapping("/users") // Cấu hình lại base path tùy project
 @RequiredArgsConstructor
 public class UserController {
 

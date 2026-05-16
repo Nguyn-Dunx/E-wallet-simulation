@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.FieldError;
+
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Slf4j
@@ -100,6 +104,65 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    @ExceptionHandler({
+            OptimisticLockingFailureException.class,
+            ObjectOptimisticLockingFailureException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingException(
+            Exception ex
+    ) {
+        log.warn("Optimistic Locking Failure: {}", ex.getMessage());
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.CONFLICT.value())
+                .message("The transaction could not be completed due to a conflict. Please try again.")
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(
+            MethodArgumentNotValidException ex
+    ) {
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+
+        log.warn("Validation Error: {}", errorMessage);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.BAD_REQUEST.value())
+                .message(errorMessage)
+                .build();
+
+        return ResponseEntity
+                .badRequest()
+                .body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(
+            ConstraintViolationException ex
+    ) {
+        String errorMessage = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getMessage())
+                .collect(Collectors.joining(", "));
+
+        log.warn("Constraint Violation: {}", errorMessage);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.BAD_REQUEST.value())
+                .message(errorMessage)
+                .build();
+
+        return ResponseEntity
+                .badRequest()
                 .body(response);
     }
 

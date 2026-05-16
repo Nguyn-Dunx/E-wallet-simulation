@@ -36,6 +36,8 @@ public class UserDetailsImpl implements UserDetails, Serializable {
 
     private final AccountStatus status;
 
+    private final Integer tokenVersion;
+
     private final Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(Account account) {
@@ -50,6 +52,7 @@ public class UserDetailsImpl implements UserDetails, Serializable {
                 account.getLoginType(),
                 displayName,
                 account.getStatus(),
+                account.getTokenVersion(),
                 authorities
         );
     }

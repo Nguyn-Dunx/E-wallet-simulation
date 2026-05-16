@@ -130,6 +130,8 @@ public class AccountService {
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         account.setLoginType(LoginType.EMPLOYEE_CODE);
         account.setStatus(AccountStatus.ACTIVE);
+        account.setTokenVersion(0);
+        account.setLoginFailedCount(0);
 
         Admin admin = new Admin();
         admin.setEmployeeCode(request.getEmployeeCode());
