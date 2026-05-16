@@ -5,13 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.common.dto.ApiResponse;
 import org.example.backend.common.exception.ElementAlreadyExistsException;
 import org.example.backend.common.utils.JwtUtils;
+import org.example.backend.modules.identity.common.enums.AccountStatus;
 import org.example.backend.modules.identity.common.enums.EkycStatus;
 import org.example.backend.modules.identity.common.enums.LoginType;
 import org.example.backend.modules.identity.common.enums.RoleName;
 import org.example.backend.modules.identity.common.utils.OtpUtils;
-import org.example.backend.modules.identity.dto.request.ChangePasswordRequest;
-import org.example.backend.modules.identity.dto.request.SignupAdminRequest;
-import org.example.backend.modules.identity.dto.request.SignupUserRequest;
+import org.example.backend.modules.identity.dto.request.*;
 import org.example.backend.modules.identity.dto.response.CommandResponse;
 import org.example.backend.modules.identity.entity.*;
 import org.example.backend.modules.identity.repository.*;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -89,7 +89,7 @@ public class AccountService {
         account.setLoginFailedCount(0);// Không hash lại, lấy luôn từ Pending
         account.setTokenVersion(0);
         account.setLoginType(LoginType.PHONE);
-        account.setStatus("ACTIVE");
+        account.setStatus(AccountStatus.ACTIVE);
 
         Role userRole = roleRepository.findByName(RoleName.USER).orElseThrow();
         account.setRole(userRole);
@@ -103,7 +103,6 @@ public class AccountService {
 
         accountRepository.save(account);
 
-        // 5. Xóa dữ liệu tạm đi
         pendingUserRepository.delete(pendingUser);
 
         return ApiResponse.success(HttpStatus.ACCEPTED, null,"Register successfully");
@@ -119,7 +118,7 @@ public class AccountService {
         account.setLoginKey(request.getLoginKey());
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         account.setLoginType(LoginType.EMPLOYEE_CODE);
-        account.setStatus("ACTIVE");
+        account.setStatus(AccountStatus.ACTIVE);
 
         Admin admin = new Admin();
         admin.setEmployeeCode(request.getEmployeeCode());
@@ -182,5 +181,49 @@ public class AccountService {
         }
 
         return ApiResponse.success(HttpStatus.OK, "Change password successfully. Please re-login", null);
+    }
+
+    @Transactional
+    public ApiResponse<String> deleteAccount(DeleteAccountRequest request, String token) {
+        Account account = accountRepository.findAuthAccount(request.loginKey())
+                .orElseThrow(() -> new RuntimeException("Not found account"));
+        UUID userId = account.getUser().getId();
+        account.setTokenVersion(account.getTokenVersion() + 1);
+        account.setStatus(AccountStatus.DELETED);
+        account.setDeletedAt(Instant.now());
+        accountRepository.save(account);
+        UUID jti = jwtUtils.getJti(token);
+        if (jti != null) {
+            tokenBlacklistService.blacklist(jti, userId, null);
+        }
+
+        return ApiResponse.success(HttpStatus.OK, "Deleted Account", null);
+    }
+
+    @Transactional
+    public ApiResponse<String> lockAccount(LockAccountRequest request, String token) {
+        Account account = accountRepository.findAuthAccount(request.loginKey())
+                .orElseThrow(() -> new RuntimeException("Not found account"));
+        UUID userId = account.getUser().getId();
+        account.setTokenVersion(account.getTokenVersion() + 1);
+        account.setStatus(AccountStatus.LOCKED);
+        account.setUpdatedAt(Instant.now());
+        accountRepository.save(account);
+        UUID jti = jwtUtils.getJti(token);
+        if (jti != null) {
+            tokenBlacklistService.blacklist(jti, userId, null);
+        }
+
+        return ApiResponse.success(HttpStatus.OK, "Locked Account", null);
+    }
+
+    @Transactional
+    public ApiResponse<String> unlockAccount(UnlockAccountRequest request) {
+        Account account = accountRepository.findAuthAccount(request.loginKey())
+                .orElseThrow(() -> new RuntimeException("Not found account"));
+        account.setStatus(AccountStatus.ACTIVE);
+        account.setUpdatedAt(Instant.now());
+        accountRepository.save(account);
+        return ApiResponse.success(HttpStatus.OK, "Unlocked Account", null);
     }
 }

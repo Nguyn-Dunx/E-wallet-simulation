@@ -13,6 +13,7 @@ import org.example.backend.modules.identity.services.AuthService;
 import org.example.backend.security.UserDetailsImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -88,6 +89,41 @@ public class AuthController {
         String token = bearerToken.substring(7);
         ApiResponse<String> response = accountService.changeUserPassword(request, userDetails.getUsername(), token);
         return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole='ADMIN'")
+    @PostMapping("/delete-account")
+    public ResponseEntity<ApiResponse<String>> deleteAccount(
+            DeleteAccountRequest request,
+            @RequestHeader("Authorization") String bearerToken)
+    {
+        String token = bearerToken.substring(7);
+        return ResponseEntity.ok(
+                accountService.deleteAccount(request, token)
+        );
+    }
+
+    @PreAuthorize("hasRole='ADMIN'")
+    @PostMapping("/lock-account")
+    public ResponseEntity<ApiResponse<String>> lockAccount(
+            LockAccountRequest request,
+            @RequestHeader("Authorization") String bearerToken)
+    {
+        String token = bearerToken.substring(7);
+        return ResponseEntity.ok(
+                accountService.lockAccount(request, token)
+        );
+    }
+
+    @PreAuthorize("hasRole='ADMIN'")
+    @PostMapping("/unlock-account")
+    public ResponseEntity<ApiResponse<String>> unlockAccount(
+            UnlockAccountRequest request
+            )
+    {
+        return ResponseEntity.ok(
+                accountService.unlockAccount(request)
+        );
     }
 
     @PostMapping("/logout")
