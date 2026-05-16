@@ -35,17 +35,16 @@ public class TransactionServiceImpl implements TransactionService {
     private final WalletInternalService walletInternalService;
 
     @Override
-    @Transactional
     public TransactionResponse transfer(UUID senderUserId, TransferRequest request) {
         log.info("Initiating transfer from User: {} to Wallet: {}", senderUserId, request.getReceiverWalletId());
 
         // check sender
         if (senderUserId == null) {
-            throw new RuntimeException("Authentication error: Sender information not found!");
+            throw new IllegalArgumentException("Authentication error: Sender information not found!");
         }
         Wallet senderWallet = walletInternalService.getWalletEntityByUserId(senderUserId);
         if (senderWallet.getId().equals(request.getReceiverWalletId())) {
-            throw new RuntimeException("You cannot transfer money to yourself!");
+            throw new IllegalArgumentException("You cannot transfer money to yourself!");
         }
 
         // check receiver
@@ -64,13 +63,10 @@ public class TransactionServiceImpl implements TransactionService {
         transaction = transactionRepository.save(transaction); // Lưu mã giao dịch PENDING
 
         try {
-            // 4. THỰC HIỆN TRỪ TIỀN (sender)
-            walletInternalService.withdraw(senderWallet.getId(), request.getAmount());
+            // 4. THỰC HIỆN TRỪ TIỀN VÀ CỘNG TIỀN TRONG 1 TRANSACTION
+            walletInternalService.transferBalances(senderWallet.getId(), receiverWallet.getId(), request.getAmount());
 
-            // 5. THỰC HIỆN CỘNG TIỀN (receiver)
-            walletInternalService.deposit(receiverWallet.getId(), request.getAmount());
-
-            // 6. Nếu cả 2 bước trên không quăng lỗi, cập nhật trạng thái SUCCESS
+            // 5. Nếu bước trên không quăng lỗi, cập nhật trạng thái SUCCESS
             transaction.setStatus(TransStatus.SUCCESS);
             transactionRepository.save(transaction);
 
@@ -80,8 +76,14 @@ public class TransactionServiceImpl implements TransactionService {
 
         } catch (Exception e) {
             log.error("Transfer failed for TXN: {}. Reason: {}", transaction.getTransactionCode(), e.getMessage());
-
-            throw new RuntimeException("Money transfer failed: " + e.getMessage());
+            
+            transaction.setStatus(TransStatus.FAILED);
+            transactionRepository.save(transaction);
+            
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException("Money transfer failed: " + e.getMessage(), e);
         }
     }
 
@@ -122,7 +124,7 @@ public class TransactionServiceImpl implements TransactionService {
         Wallet wallet = walletInternalService.getWalletEntityByUserId(userId);
 
         Transaction txn = transactionRepository.findByTransactionCode(txnCode)
-                .orElseThrow(() -> new RuntimeException("No transactions found"));
+                .orElseThrow(() -> new IllegalArgumentException("No transactions found"));
 
         // Bảo mật: Chỉ cho phép người gửi hoặc người nhận xem chi tiết
 
@@ -130,7 +132,7 @@ public class TransactionServiceImpl implements TransactionService {
         boolean isReceiver = wallet.getId().equals(txn.getReceiverWalletId());
 
         if (!isSender && !isReceiver) {
-            throw new RuntimeException("You do not have permission to view this transaction");
+            throw new IllegalArgumentException("You do not have permission to view this transaction");
         }
 
         return transactionMapper.toResponse(txn);
@@ -154,12 +156,20 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        // 3. Thực hiện cộng tiền vào ví
-        walletInternalService.deposit(wallet.getId(), request.getAmount());
+        try {
+            // 3. Thực hiện cộng tiền vào ví
+            walletInternalService.deposit(wallet.getId(), request.getAmount());
 
-        // 4. Hoàn tất
-        transaction.setStatus(TransStatus.SUCCESS);
-        return transactionMapper.toResponse(transactionRepository.save(transaction));
+            // 4. Hoàn tất
+            transaction.setStatus(TransStatus.SUCCESS);
+            return transactionMapper.toResponse(transactionRepository.save(transaction));
+        } catch (Exception e) {
+            log.error("Deposit failed for TXN: {}. Reason: {}", transaction.getTransactionCode(), e.getMessage());
+            transaction.setStatus(TransStatus.FAILED);
+            transactionRepository.save(transaction);
+            if (e instanceof RuntimeException) throw (RuntimeException) e;
+            throw new RuntimeException("Deposit failed: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -178,18 +188,26 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        // Thực hiện trừ tiền ví (Hàm này đã có logic check số dư)
-        walletInternalService.withdraw(wallet.getId(), request.getAmount());
+        try {
+            // Thực hiện trừ tiền ví (Hàm này đã có logic check số dư)
+            walletInternalService.withdraw(wallet.getId(), request.getAmount());
 
-        transaction.setStatus(TransStatus.SUCCESS);
-        return transactionMapper.toResponse(transactionRepository.save(transaction));
+            transaction.setStatus(TransStatus.SUCCESS);
+            return transactionMapper.toResponse(transactionRepository.save(transaction));
+        } catch (Exception e) {
+            log.error("Withdraw failed for TXN: {}. Reason: {}", transaction.getTransactionCode(), e.getMessage());
+            transaction.setStatus(TransStatus.FAILED);
+            transactionRepository.save(transaction);
+            if (e instanceof RuntimeException) throw (RuntimeException) e;
+            throw new RuntimeException("Withdraw failed: " + e.getMessage(), e);
+        }
     }
 
     private void validateLinkedSource(UUID walletId, UUID sourceId) {
         LinkedSource source = linkedSourceRepository.findById(sourceId)
-                .orElseThrow(() -> new RuntimeException("The Linked Source do not exist"));
+                .orElseThrow(() -> new IllegalArgumentException("The Linked Source do not exist"));
         if (!source.getWalletId().equals(walletId)) {
-            throw new RuntimeException("Linked Source that do not belong to you");
+            throw new IllegalArgumentException("Linked Source that do not belong to you");
         }
     }
 }

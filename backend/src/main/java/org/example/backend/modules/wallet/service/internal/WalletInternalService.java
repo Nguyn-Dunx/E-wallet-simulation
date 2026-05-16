@@ -16,5 +16,7 @@ public interface WalletInternalService {
 
     Wallet withdraw(UUID walletId, BigDecimal amount);
 
+    void transferBalances(UUID senderWalletId, UUID receiverWalletId, BigDecimal amount);
+
     Wallet getWalletEntityByUserId(UUID userId);
 }

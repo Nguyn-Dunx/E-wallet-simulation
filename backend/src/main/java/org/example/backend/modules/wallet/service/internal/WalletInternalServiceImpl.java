@@ -3,6 +3,8 @@ package org.example.backend.modules.wallet.service.internal;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.backend.common.exception.InsufficientBalanceException;
+import org.example.backend.common.exception.WalletNotFoundException;
 import org.example.backend.modules.wallet.entity.Wallet;
 import org.example.backend.modules.wallet.repository.WalletRepository;
 import org.springframework.stereotype.Service;
@@ -30,14 +32,14 @@ public class WalletInternalServiceImpl implements WalletInternalService{
     @Override
     public Wallet getWalletEntityById(UUID walletId) {
         return walletRepository.findByIdAndDeletedAtIsNull(walletId)
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found with ID: " + walletId));
     }
 
     @Override
     @Transactional
     public Wallet deposit(UUID walletId, BigDecimal amount) {
         if(amount.compareTo(BigDecimal.ZERO) <= 0){
-            throw new RuntimeException("Deposit amount must be greater than zero");
+            throw new IllegalArgumentException("Deposit amount must be greater than zero");
         }
         Wallet wallet = getWalletEntityById(walletId);
 
@@ -54,14 +56,14 @@ public class WalletInternalServiceImpl implements WalletInternalService{
     @Transactional
     public Wallet withdraw(UUID walletId, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Withdraw amount must be greater than zero");
+            throw new IllegalArgumentException("Withdraw amount must be greater than zero");
         }
 
         Wallet wallet = getWalletEntityById(walletId);
 
         if (wallet.getBalance().compareTo(amount) < 0) {
             log.error("Insufficient funds in wallet {}", walletId);
-            throw new RuntimeException("Insufficient funds"); // Nên tạo InsufficientBalanceException
+            throw new InsufficientBalanceException("Insufficient funds");
         }
 
         // Trừ tiền
@@ -74,10 +76,17 @@ public class WalletInternalServiceImpl implements WalletInternalService{
     }
 
     @Override
+    @Transactional
+    public void transferBalances(UUID senderWalletId, UUID receiverWalletId, BigDecimal amount) {
+        this.withdraw(senderWalletId, amount);
+        this.deposit(receiverWalletId, amount);
+    }
+
+    @Override
     public Wallet getWalletEntityByUserId(UUID userId) {
 
         return walletRepository.findByUserIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user: " + userId));
     }
 
 
