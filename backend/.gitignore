@@ -14,6 +14,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
+.idea/
 .idea
 *.iws
 *.iml
@@ -36,5 +37,7 @@ build/
 .vscode/
 
 # Logs
+backend/logs/application.log
 *.log
 logs/
+log/

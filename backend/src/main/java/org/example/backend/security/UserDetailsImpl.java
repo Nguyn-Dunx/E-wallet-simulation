@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.modules.identity.common.enums.AccountStatus;
 import org.example.backend.modules.identity.common.enums.LoginType;
 import org.example.backend.modules.identity.entity.Account;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,7 +21,7 @@ import java.util.UUID;
 @EqualsAndHashCode(of = "id")
 public class UserDetailsImpl implements UserDetails, Serializable {
 
-    private static final long serialVersionUUID = 1L;
+    private static final long serialVersionUID = 1L;
 
     private final UUID id;
 
@@ -33,7 +34,7 @@ public class UserDetailsImpl implements UserDetails, Serializable {
 
     private final String displayName;
 
-    private final String status;
+    private final AccountStatus status;
 
     private final Collection<? extends GrantedAuthority> authorities;
 
@@ -76,7 +77,7 @@ public class UserDetailsImpl implements UserDetails, Serializable {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !"LOCKED".equalsIgnoreCase(status);
+        return status != AccountStatus.LOCKED;
     }
 
     @Override
@@ -86,6 +87,6 @@ public class UserDetailsImpl implements UserDetails, Serializable {
 
     @Override
     public boolean isEnabled() {
-        return "ACTIVE".equalsIgnoreCase(status);
+        return status == AccountStatus.ACTIVE;
     }
 }

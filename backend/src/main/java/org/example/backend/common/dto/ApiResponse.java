@@ -3,6 +3,7 @@ package org.example.backend.common.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
 
@@ -16,6 +17,15 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(String message,T data) {
+        return ApiResponse.<T>builder()
+                .timestamp(Instant.now())
+                .code(200)
+                .message(message)
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> success(HttpStatus httpStatus, String message, T data) {
         return ApiResponse.<T>builder()
                 .timestamp(Instant.now())
                 .code(200)

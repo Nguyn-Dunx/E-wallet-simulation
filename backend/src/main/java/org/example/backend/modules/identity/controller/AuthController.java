@@ -1,20 +1,21 @@
 package org.example.backend.modules.identity.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.modules.identity.dto.request.LoginRequest;
-import org.example.backend.modules.identity.dto.request.SignupAdminRequest;
-import org.example.backend.modules.identity.dto.request.SignupUserRequest;
+import org.example.backend.common.dto.ApiResponse;
+import org.example.backend.common.utils.JwtUtils;
+import org.example.backend.modules.identity.dto.request.*;
 import org.example.backend.modules.identity.dto.response.CommandResponse;
 import org.example.backend.modules.identity.dto.response.JwtResponse;
 import org.example.backend.modules.identity.services.AccountService;
 import org.example.backend.modules.identity.services.AuthService;
+import org.example.backend.security.UserDetailsImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -23,6 +24,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final AccountService accountService;
+    private final JwtUtils jwtUtils;
 
     /**
      * Login for both USER and ADMIN
@@ -37,18 +39,26 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Signup normal user
-     */
-    @PostMapping("/users/signup")
-    public ResponseEntity<CommandResponse> signupUser(
+    @PostMapping("/users/signup/init")
+    public ResponseEntity<ApiResponse<String>> initSignupUser(
             @Valid @RequestBody SignupUserRequest request
     ) {
+        ApiResponse<String> response = accountService.initSignupUser(request);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
 
-        CommandResponse response =
-                accountService.signupUser(request);
-        System.out.println("Registering");
+    /**
+     * BƯỚC 2: Kiểm tra OTP, nếu đúng thì tạo tài khoản chính thức
+     */
+    @PostMapping("/users/signup/verify")
+    public ResponseEntity<ApiResponse<String>> verifySignupUser(
+            @Valid @RequestBody VerifyOtpRequest request
+    ) {
+        ApiResponse<String> response = accountService.verifyAndSignupUser(request.getPhone(), request.getOtp());
 
+        // Trả về 201 Created vì lúc này tài khoản mới chính thức sinh ra
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
@@ -69,4 +79,60 @@ public class AuthController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+
+    @PostMapping("/users/change-password")
+    public ResponseEntity<ApiResponse<String>> changeUserPassword(
+            @RequestHeader("Authorization") String bearerToken,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        String token = bearerToken.substring(7);
+        ApiResponse<String> response = accountService.changeUserPassword(request, userDetails.getUsername(), token);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole='ADMIN'")
+    @PostMapping("/delete-account")
+    public ResponseEntity<ApiResponse<String>> deleteAccount(
+            DeleteAccountRequest request,
+            @RequestHeader("Authorization") String bearerToken)
+    {
+        String token = bearerToken.substring(7);
+        return ResponseEntity.ok(
+                accountService.deleteAccount(request, token)
+        );
+    }
+
+    @PreAuthorize("hasRole='ADMIN'")
+    @PostMapping("/lock-account")
+    public ResponseEntity<ApiResponse<String>> lockAccount(
+            LockAccountRequest request,
+            @RequestHeader("Authorization") String bearerToken)
+    {
+        String token = bearerToken.substring(7);
+        return ResponseEntity.ok(
+                accountService.lockAccount(request, token)
+        );
+    }
+
+    @PreAuthorize("hasRole='ADMIN'")
+    @PostMapping("/unlock-account")
+    public ResponseEntity<ApiResponse<String>> unlockAccount(
+            UnlockAccountRequest request
+            )
+    {
+        return ResponseEntity.ok(
+                accountService.unlockAccount(request)
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout(
+            HttpServletRequest request
+    ) {
+        String token = jwtUtils.resolveToken(request);
+        ApiResponse<String> response = authService.logout(token);
+        return ResponseEntity.ok(response);
+    }
+
 }

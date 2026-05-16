@@ -8,6 +8,8 @@ import io.jsonwebtoken.security.Keys;
 
 import jakarta.annotation.PostConstruct;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,6 +17,7 @@ import org.example.backend.config.MessageService;
 import org.example.backend.security.JwtProperties;
 import org.example.backend.security.UserDetailsImpl;
 
+import org.springframework.util.StringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -25,6 +28,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static org.example.backend.common.Constants.ACCESS_TOKEN_COOKIE;
+import static org.example.backend.common.Constants.BEARER_PREFIX;
 import static org.example.backend.common.MessageKeys.ERROR_JWT_INVALID_TOKEN;
 
 @Component
@@ -70,11 +75,14 @@ public class JwtUtils {
                 now.getTime() + jwtProperties.getJwtExpirationMs()
         );
 
+        final String jid = UUID.randomUUID().toString();
+
         return Jwts.builder()
                 .subject(username)
                 .claim("uid", userId.toString())
                 .claim("roles", roles)
                 .claim("ver", version)
+                .id(jid)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
@@ -124,6 +132,11 @@ public class JwtUtils {
         return UUID.fromString(uid);
     }
 
+    public Date getExpiration(String token) {
+        return parseClaims(token)
+                .getExpiration();
+    }
+
     public List<String> getRoles(String token) {
 
         List<?> roles = parseClaims(token)
@@ -138,5 +151,34 @@ public class JwtUtils {
 
         return parseClaims(token)
                 .get("ver", Integer.class);
+    }
+
+    public UUID getJti(String token) {
+        String id =  parseClaims(token)
+                .getId();
+        return UUID.fromString(id);
+    }
+
+    public String resolveToken(HttpServletRequest request) {
+
+        String bearer = request.getHeader("Authorization");
+
+        if (StringUtils.hasText(bearer)
+                && bearer.startsWith(BEARER_PREFIX)) {
+
+            return bearer.substring(7);
+        }
+
+        if (request.getCookies() != null) {
+
+            for (Cookie cookie : request.getCookies()) {
+
+                if (ACCESS_TOKEN_COOKIE.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
     }
 }

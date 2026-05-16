@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.backend.common.BaseEntity;
+import org.example.backend.modules.identity.common.enums.AccountStatus;
 import org.example.backend.modules.identity.common.enums.LoginType;
 
 @Entity
@@ -22,13 +23,14 @@ public class Account extends BaseEntity {
     private String passwordHash;
 
     @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private AccountStatus status;
 
     @Column(name = "login_failed_count", nullable = false)
-    private int loginFailedCount;
+    private Integer loginFailedCount;
 
     @Column(name = "token_version", nullable = false)
-    private int tokenVersion;
+    private Integer tokenVersion;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)

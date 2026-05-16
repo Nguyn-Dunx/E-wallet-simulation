@@ -1,6 +1,7 @@
 package org.example.backend.modules.identity.repository;
 
 import jakarta.validation.constraints.NotBlank;
+import org.example.backend.modules.identity.common.enums.AccountStatus;
 import org.example.backend.modules.identity.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -37,6 +38,10 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     where a.loginKey = :loginKey
 """)
     Optional<Integer> findTokenVersion(@Param("loginKey") String loginKey);
+
+    // Trong AccountRepository.java
+    @Query("SELECT a.status FROM Account a WHERE a.loginKey = :username")
+    Optional<AccountStatus> findStatusByLoginKey(@Param("loginKey") String loginKey);
 
     boolean existsByLoginKeyIgnoreCase(@NotBlank(message = "{validation.auth.loginKey.required}") String loginKey);
 }
