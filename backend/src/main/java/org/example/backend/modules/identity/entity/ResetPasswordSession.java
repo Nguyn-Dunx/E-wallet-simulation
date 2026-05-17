@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "reset_password_sessions", schema = "identity", indexes = {
@@ -16,8 +16,9 @@ import java.time.LocalDateTime;
 public class ResetPasswordSession{
 
     @Id
-    @JoinColumn(name = "id")
-    private BigInteger id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "uuid")
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
