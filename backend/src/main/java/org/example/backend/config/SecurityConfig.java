@@ -73,8 +73,6 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/wallets/**").permitAll()
-                        .requestMatchers("/api/v1/transactions/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
@@ -94,6 +92,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(ALLOWED_ORIGIN));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);

@@ -11,8 +11,8 @@ import java.util.UUID;
 @Data
 public class TransferRequest {
 
-    @NotNull(message = "Receiver Wallet ID is required")
-    private UUID receiverWalletId;
+    @NotNull(message = "Receiver phone number is required")
+    private String receiverLoginKey;
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "1000.0", message = "Minimum transfer amount is 1,000 VND")

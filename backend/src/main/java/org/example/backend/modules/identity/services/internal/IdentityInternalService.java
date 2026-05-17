@@ -4,4 +4,5 @@ import java.util.UUID;
 
 public interface IdentityInternalService {
     void verifyTransactionPin(UUID userId, String rawPin);
+    UUID getUserIdByLoginKey(String loginKey);
 }

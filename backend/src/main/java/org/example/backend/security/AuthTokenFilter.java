@@ -65,13 +65,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             if (token != null) {
                 // Ném lỗi nếu token không hợp lệ (hết hạn, sai chữ ký, format láo)
                 if (!jwtUtils.isValid(token)) {
-                    throw new RuntimeException("Invalid or expired JWT token");
+                    throw new org.example.backend.common.exception.AuthenticationException("Invalid or expired JWT token");
                 }
 
                 // Ném lỗi nếu token đã bị đăng xuất / thu hồi
                 UUID jti = jwtUtils.getJti(token);
                 if (tokenBlacklistService.isBlacklisted(jti)) {
-                    throw new RuntimeException("Token has been blacklisted");
+                    throw new org.example.backend.common.exception.AuthenticationException("Token has been blacklisted");
                 }
 
                 // Đủ điều kiện: Set Security Context
@@ -114,10 +114,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private void validateTokenVersion(String username, Integer tokenVersion) {
         Integer versionInDb = accountRepository
                 .findTokenVersion(username)
-                .orElseThrow(() -> new RuntimeException("User not found in database"));
+                .orElseThrow(() -> new org.example.backend.common.exception.AuthenticationException("User not found in database"));
 
         if (!versionInDb.equals(tokenVersion)) {
-            throw new RuntimeException("Token version is outdated. Please login again.");
+            throw new org.example.backend.common.exception.AuthenticationException("Token version is outdated. Please login again.");
         }
     }
 

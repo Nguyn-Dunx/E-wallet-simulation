@@ -38,7 +38,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionResponse transfer(UUID senderUserId, TransferRequest request) {
-        log.info("Initiating transfer from User: {} to Wallet: {}", senderUserId, request.getReceiverWalletId());
+        log.info("Initiating transfer from User: {} to Phone: {}", senderUserId, request.getReceiverLoginKey());
 
         // check sender
         if (senderUserId == null) {
@@ -49,12 +49,14 @@ public class TransactionServiceImpl implements TransactionService {
         identityInternalService.verifyTransactionPin(senderUserId, request.getPin());
 
         Wallet senderWallet = walletInternalService.getWalletEntityByUserId(senderUserId);
-        if (senderWallet.getId().equals(request.getReceiverWalletId())) {
+
+        // find receiver by loginKey
+        UUID receiverUserId = identityInternalService.getUserIdByLoginKey(request.getReceiverLoginKey());
+        if (senderUserId.equals(receiverUserId)) {
             throw new IllegalArgumentException("You cannot transfer money to yourself!");
         }
 
-        // check receiver
-        Wallet receiverWallet = walletInternalService.getWalletEntityById(request.getReceiverWalletId());
+        Wallet receiverWallet = walletInternalService.getWalletEntityByUserId(receiverUserId);
 
         // 3. Khởi tạo bản ghi Giao dịch với trạng thái PENDING
         Transaction transaction = Transaction.builder()

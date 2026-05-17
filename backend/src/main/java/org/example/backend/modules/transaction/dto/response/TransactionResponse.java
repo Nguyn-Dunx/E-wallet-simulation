@@ -4,10 +4,13 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 public class TransactionResponse {
     private String transactionCode;
+    private UUID senderWalletId;
+    private UUID receiverWalletId;
     private BigDecimal amount;
     private BigDecimal fee;
     private String type;

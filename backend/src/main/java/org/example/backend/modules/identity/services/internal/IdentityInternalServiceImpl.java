@@ -53,4 +53,11 @@ public class IdentityInternalServiceImpl implements IdentityInternalService {
             accountRepository.save(account);
         }
     }
+
+    @Override
+    public UUID getUserIdByLoginKey(String loginKey) {
+        return accountRepository.findAuthAccount(loginKey)
+                .map(Account::getId)
+                .orElseThrow(() -> new RuntimeException("Receiver account not found with the provided phone number."));
+    }
 }

@@ -1,0 +1,82 @@
+.settings-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.settings-menu { padding: var(--space-sm); display: flex; flex-direction: column; gap: 4px; }
+
+.settings-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-align: left;
+  transition: all var(--transition-base);
+  width: 100%;
+}
+
+.settings-menu-item:hover {
+  background: var(--bg-glass);
+  border-color: var(--border);
+}
+
+.settings-menu-item.active {
+  background: rgba(14, 116, 144, 0.12);
+  border-color: rgba(14, 116, 144, 0.28);
+}
+
+.settings-menu-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.settings-menu-item.active .settings-menu-icon {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.settings-menu-text { flex: 1; min-width: 0; }
+.settings-menu-title { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+.settings-menu-desc  { display: block; font-size: 0.75rem; color: var(--text-muted); }
+
+.settings-chevron { color: var(--text-muted); transition: transform var(--transition-base); }
+.settings-chevron.rotated { transform: rotate(90deg); }
+
+.settings-content { padding: var(--space-xl); }
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Profile info */
+.profile-info { display: flex; flex-direction: column; gap: 2px; }
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.profile-row:last-child { border-bottom: none; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-layout { grid-template-columns: 1fr; }
+}
