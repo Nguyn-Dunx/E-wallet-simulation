@@ -17,4 +17,6 @@ public class TransactionResponse {
     private String status;
     private String description;
     private Instant createdAt;
+
+    private String direction;
 }

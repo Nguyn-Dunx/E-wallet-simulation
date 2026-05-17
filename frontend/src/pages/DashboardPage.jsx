@@ -53,7 +53,21 @@ export default function DashboardPage() {
     } catch (_) {} finally { setTxnLoading(false); }
   }, []);
 
+  const normalizeDirection = useCallback((raw) => {
+    if (raw === null || raw === undefined) return null;
+    const v = String(raw).trim().toUpperCase();
+    if (!v) return null;
+    if (['IN', 'INCOMING', 'CREDIT', '+', 'PLUS', 'RECEIVE', 'RECEIVED', 'RECEIVER'].includes(v)) return 'IN';
+    if (['OUT', 'OUTGOING', 'DEBIT', '-', 'MINUS', 'SEND', 'SENT', 'SENDER'].includes(v)) return 'OUT';
+    if (v === '1' || v === '+1') return 'IN';
+    if (v === '-1') return 'OUT';
+    return null;
+  }, []);
+
   const getTxnDirection = useCallback((txn, walletId) => {
+    const direct = normalizeDirection(txn.direction ?? txn.direct);
+    if (direct) return direct;
+
     if (txn.type === 'DEPOSIT') return 'IN';
     if (txn.type === 'WITHDRAW') return 'OUT';
     if (txn.type === 'TRANSFER' && walletId) {
@@ -62,7 +76,7 @@ export default function DashboardPage() {
       if (txn.senderWalletId && String(txn.senderWalletId) === wid) return 'OUT';
     }
     return null;
-  }, []);
+  }, [normalizeDirection]);
 
   const buildSummary = useCallback((items, walletId) => {
     const now = new Date();

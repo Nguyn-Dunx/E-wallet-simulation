@@ -3,13 +3,31 @@ import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import './TransactionItem.css';
 
 export default function TransactionItem({ txn, walletId, onClick }) {
+  const normalizeDirection = (raw) => {
+    if (raw === null || raw === undefined) return null;
+    const v = String(raw).trim().toUpperCase();
+    if (!v) return null;
+
+    if (['IN', 'INCOMING', 'CREDIT', '+', 'PLUS', 'RECEIVE', 'RECEIVED', 'RECEIVER'].includes(v)) return 'IN';
+    if (['OUT', 'OUTGOING', 'DEBIT', '-', 'MINUS', 'SEND', 'SENT', 'SENDER'].includes(v)) return 'OUT';
+    if (v === '1' || v === '+1') return 'IN';
+    if (v === '-1') return 'OUT';
+
+    return null;
+  };
+
   const isTransfer = txn.type === 'TRANSFER';
   const isDeposit = txn.type === 'DEPOSIT';
+  const direct = normalizeDirection(txn.direction ?? txn.direct);
+
   const isIncomingTransfer = isTransfer && walletId && txn.receiverWalletId && String(txn.receiverWalletId) === String(walletId);
-  const isOutgoingTransfer = isTransfer && walletId && txn.senderWalletId && String(txn.senderWalletId) === String(walletId);
-  const isPositive = isDeposit || isIncomingTransfer;
+
+  const isPositive = direct
+    ? direct === 'IN'
+    : (isDeposit || isIncomingTransfer);
+
   const label = isTransfer
-    ? (txn.description || (isIncomingTransfer ? 'Nhan tien' : 'Chuyen tien'))
+    ? (txn.description || (isPositive ? 'Nhan tien' : 'Chuyen tien'))
     : getTransactionLabel(txn);
 
   const IconComponent = isPositive ? ArrowDownLeft : ArrowUpRight;

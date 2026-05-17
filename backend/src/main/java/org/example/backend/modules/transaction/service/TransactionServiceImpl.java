@@ -80,7 +80,7 @@ public class TransactionServiceImpl implements TransactionService {
 
             log.info("Transfer successful. TXN Code: {}", transaction.getTransactionCode());
 
-            return transactionMapper.toResponse(transaction);
+            return mapToResponseWithDirection(transaction, senderWallet.getId());
 
         } catch (Exception e) {
             log.error("Transfer failed for TXN: {}. Reason: {}", transaction.getTransactionCode(), e.getMessage());
@@ -95,6 +95,33 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
+    // helper for getMyTransactionHistory
+    private TransactionResponse mapToResponseWithDirection(Transaction txn, UUID myWalletId) {
+        // Dùng MapStruct để map các trường cơ bản như cũ
+        TransactionResponse response = transactionMapper.toResponse(txn);
+
+        response.setSenderWalletId(txn.getSenderWalletId());
+        response.setReceiverWalletId(txn.getReceiverWalletId());
+
+        // Bắt đầu logic gán chiều giao dịch (direction)
+        if (txn.getType() == TransType.DEPOSIT) {
+            // Nạp tiền vào ví -> IN
+            response.setDirection("IN");
+        } else if (txn.getType() == TransType.WITHDRAW) {
+            // Rút tiền ra khỏi ví -> OUT
+            response.setDirection("OUT");
+        } else if (txn.getType() == TransType.TRANSFER) {
+            // Chuyển tiền: Cần so sánh ID để biết mình là người gửi hay người nhận
+            if (myWalletId.equals(txn.getSenderWalletId())) {
+                response.setDirection("OUT"); // Mình là người gửi -> Tiền ra
+            } else if (myWalletId.equals(txn.getReceiverWalletId())) {
+                response.setDirection("IN");  // Mình là người nhận -> Tiền vào
+            }
+        }
+
+        return response;
+    }
+
     @Override
     public Page<TransactionResponse> getMyTransactionHistory(UUID userId, Pageable pageable) {
 
@@ -102,7 +129,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         return transactionRepository
                 .getTransactionHistoryByWalletId(wallet.getId(), pageable)
-                .map(transactionMapper::toResponse);
+                .map(txn -> mapToResponseWithDirection(txn, wallet.getId()));
     }
 
     @Override
@@ -124,7 +151,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 
         // 3. Map sang DTO và trả về
-        return transactions.map(transactionMapper::toResponse);
+        return transactions.map(txn -> mapToResponseWithDirection(txn, wallet.getId()));
     }
 
     @Override
@@ -143,7 +170,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new IllegalArgumentException("You do not have permission to view this transaction");
         }
 
-        return transactionMapper.toResponse(txn);
+        return mapToResponseWithDirection(txn, wallet.getId());
     }
 
     @Override
@@ -173,7 +200,9 @@ public class TransactionServiceImpl implements TransactionService {
 
             // 4. Hoàn tất
             transaction.setStatus(TransStatus.SUCCESS);
-            return transactionMapper.toResponse(transactionRepository.save(transaction));
+
+            Transaction savedTxn = transactionRepository.save(transaction);
+            return mapToResponseWithDirection(savedTxn, wallet.getId());
         } catch (Exception e) {
             log.error("Deposit failed for TXN: {}. Reason: {}", transaction.getTransactionCode(), e.getMessage());
             transaction.setStatus(TransStatus.FAILED);
@@ -207,7 +236,9 @@ public class TransactionServiceImpl implements TransactionService {
             walletInternalService.withdraw(wallet.getId(), request.getAmount());
 
             transaction.setStatus(TransStatus.SUCCESS);
-            return transactionMapper.toResponse(transactionRepository.save(transaction));
+
+            Transaction savedTxn = transactionRepository.save(transaction);
+            return mapToResponseWithDirection(savedTxn, wallet.getId());
         } catch (Exception e) {
             log.error("Withdraw failed for TXN: {}. Reason: {}", transaction.getTransactionCode(), e.getMessage());
             transaction.setStatus(TransStatus.FAILED);
@@ -224,4 +255,5 @@ public class TransactionServiceImpl implements TransactionService {
             throw new IllegalArgumentException("Linked Source that do not belong to you");
         }
     }
+
 }
