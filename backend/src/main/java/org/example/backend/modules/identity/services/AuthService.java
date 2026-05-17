@@ -44,6 +44,10 @@ public class AuthService {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
+        if (request.getLoginType() != null && !request.getLoginType().equalsIgnoreCase(userDetails.getLoginType().name())) {
+            throw new IllegalArgumentException("Invalid login type for this account");
+        }
+
         int tokenVersion = userDetails.getTokenVersion();
         String token = jwtUtils.generateToken(authentication, tokenVersion);
 

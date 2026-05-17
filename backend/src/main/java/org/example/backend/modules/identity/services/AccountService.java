@@ -41,6 +41,7 @@ public class AccountService {
     private final ResetPasswordSessionRepo sessionRepository;
     private final JwtUtils jwtUtils;
     private final TokenBlacklistService tokenBlacklistService;
+    private final AdminRepository adminRepository;
 
 
     private final ApplicationEventPublisher eventPublisher;
@@ -97,6 +98,7 @@ public class AccountService {
         account.setPasswordHash(pendingUser.getHashedPassword());
         account.setLoginFailedCount(0);// Không hash lại, lấy luôn từ Pending
         account.setTokenVersion(0);
+        account.setPinFailedCount(0);
         account.setLoginType(LoginType.PHONE);
         account.setStatus(AccountStatus.ACTIVE);
 
@@ -125,6 +127,10 @@ public class AccountService {
             throw new ElementAlreadyExistsException("Login key already exists");
         }
 
+        if (adminRepository.existsByEmployeeCode(request.getEmployeeCode())) {
+            throw new ElementAlreadyExistsException("Employee code already exists");
+        }
+
         Account account = new Account();
         account.setLoginKey(request.getLoginKey());
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -132,6 +138,10 @@ public class AccountService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setTokenVersion(0);
         account.setLoginFailedCount(0);
+        account.setPinFailedCount(0);
+
+        Role adminRole = roleRepository.findByName(RoleName.ADMIN).orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
+        account.setRole(adminRole);
 
         Admin admin = new Admin();
         admin.setEmployeeCode(request.getEmployeeCode());
@@ -238,5 +248,53 @@ public class AccountService {
         account.setUpdatedAt(Instant.now());
         accountRepository.save(account);
         return ApiResponse.success(HttpStatus.OK, "Unlocked Account", null);
+    }
+
+    @Transactional
+    public ApiResponse<String> setTransactionPin(String loginKey, SetPinRequest request) {
+        Account account = accountRepository.findAuthAccount(loginKey)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (account.getPinHash() != null) {
+            throw new RuntimeException("PIN is already set. Please use change PIN feature instead.");
+        }
+
+        if (!request.getPin().equals(request.getConfirmPin())) {
+            throw new IllegalArgumentException("PIN and Confirm PIN do not match");
+        }
+
+        account.setPinHash(passwordEncoder.encode(request.getPin()));
+        account.setPinFailedCount(0);
+        accountRepository.save(account);
+
+        return ApiResponse.success(HttpStatus.OK, "Transaction PIN set successfully", null);
+    }
+
+    @Transactional
+    public ApiResponse<String> changeTransactionPin(String loginKey, ChangePinRequest request) {
+        Account account = accountRepository.findAuthAccount(loginKey)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (account.getPinHash() == null) {
+            throw new RuntimeException("PIN is not set yet. Please set your PIN first.");
+        }
+
+        if (!passwordEncoder.matches(request.getOldPin(), account.getPinHash())) {
+            throw new RuntimeException("Incorrect current PIN");
+        }
+
+        if (!request.getNewPin().equals(request.getConfirmNewPin())) {
+            throw new IllegalArgumentException("New PIN and Confirm New PIN do not match");
+        }
+
+        if (passwordEncoder.matches(request.getNewPin(), account.getPinHash())) {
+            throw new RuntimeException("New PIN cannot be the same as the current PIN");
+        }
+
+        account.setPinHash(passwordEncoder.encode(request.getNewPin()));
+        account.setPinFailedCount(0);
+        accountRepository.save(account);
+
+        return ApiResponse.success(HttpStatus.OK, "Transaction PIN changed successfully", null);
     }
 }

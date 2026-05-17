@@ -13,6 +13,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.validation.FieldError;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.stream.Collectors;
 
@@ -181,6 +182,27 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .badRequest()
+                .body(response);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex
+    ) {
+        log.warn("Data Integrity Violation: {}", ex.getMessage());
+
+        String message = "The provided data violates a unique constraint or database rule.";
+        if (ex.getMessage() != null && ex.getMessage().contains("duplicate key value")) {
+            message = "This data already exists in the system. Please use a different value.";
+        }
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .code(HttpStatus.CONFLICT.value())
+                .message(message)
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
                 .body(response);
     }
 }

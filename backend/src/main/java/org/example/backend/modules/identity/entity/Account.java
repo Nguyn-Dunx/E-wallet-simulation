@@ -32,6 +32,12 @@ public class Account extends BaseEntity {
     @Column(name = "token_version", nullable = false)
     private Integer tokenVersion;
 
+    @Column(name = "pin_hash")
+    private String pinHash;
+
+    @Column(name = "pin_failed_count", nullable = false)
+    private Integer pinFailedCount;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;

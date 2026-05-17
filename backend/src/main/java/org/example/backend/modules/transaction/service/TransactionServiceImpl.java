@@ -16,6 +16,7 @@ import org.example.backend.modules.wallet.entity.LinkedSource;
 import org.example.backend.modules.wallet.entity.Wallet;
 import org.example.backend.modules.wallet.repository.LinkedSourceRepository;
 import org.example.backend.modules.wallet.service.internal.WalletInternalService;
+import org.example.backend.modules.identity.services.internal.IdentityInternalService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class TransactionServiceImpl implements TransactionService {
     final LinkedSourceRepository linkedSourceRepository;
 
     private final WalletInternalService walletInternalService;
+    private final IdentityInternalService identityInternalService;
 
     @Override
     public TransactionResponse transfer(UUID senderUserId, TransferRequest request) {
@@ -42,6 +44,10 @@ public class TransactionServiceImpl implements TransactionService {
         if (senderUserId == null) {
             throw new IllegalArgumentException("Authentication error: Sender information not found!");
         }
+
+        // Verify PIN
+        identityInternalService.verifyTransactionPin(senderUserId, request.getPin());
+
         Wallet senderWallet = walletInternalService.getWalletEntityByUserId(senderUserId);
         if (senderWallet.getId().equals(request.getReceiverWalletId())) {
             throw new IllegalArgumentException("You cannot transfer money to yourself!");
@@ -140,6 +146,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionResponse deposit(UUID userId, DepositRequest request) {
+        // Verify PIN
+        identityInternalService.verifyTransactionPin(userId, request.getPin());
+
         Wallet wallet = walletInternalService.getWalletEntityByUserId(userId);
 
         // 1. Kiểm tra tính hợp lệ của nguồn tiền
@@ -174,6 +183,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionResponse withdraw(UUID userId, WithdrawRequest request) {
+        // Verify PIN
+        identityInternalService.verifyTransactionPin(userId, request.getPin());
+
         Wallet wallet = walletInternalService.getWalletEntityByUserId(userId);
 
         validateLinkedSource(wallet.getId(), request.getSourceId());

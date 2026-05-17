@@ -35,6 +35,8 @@ CREATE TABLE identity.accounts (
     login_failed_count INT NOT NULL DEFAULT 0,
     password_change_at timestamptz,
     token_version INT NOT NULL DEFAULT 0,
+    pin_hash TEXT,
+    pin_failed_count INT NOT NULL DEFAULT 0,
     
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz,

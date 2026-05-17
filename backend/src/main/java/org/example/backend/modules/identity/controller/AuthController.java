@@ -91,10 +91,10 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole='ADMIN'")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/delete-account")
     public ResponseEntity<ApiResponse<String>> deleteAccount(
-            DeleteAccountRequest request,
+            @RequestBody DeleteAccountRequest request,
             @RequestHeader("Authorization") String bearerToken)
     {
         String token = bearerToken.substring(7);
@@ -103,10 +103,10 @@ public class AuthController {
         );
     }
 
-    @PreAuthorize("hasRole='ADMIN'")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/lock-account")
     public ResponseEntity<ApiResponse<String>> lockAccount(
-            LockAccountRequest request,
+            @RequestBody LockAccountRequest request,
             @RequestHeader("Authorization") String bearerToken)
     {
         String token = bearerToken.substring(7);
@@ -115,10 +115,10 @@ public class AuthController {
         );
     }
 
-    @PreAuthorize("hasRole='ADMIN'")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/unlock-account")
     public ResponseEntity<ApiResponse<String>> unlockAccount(
-            UnlockAccountRequest request
+            @RequestBody UnlockAccountRequest request
             )
     {
         return ResponseEntity.ok(
@@ -135,4 +135,21 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/users/set-pin")
+    public ResponseEntity<ApiResponse<String>> setTransactionPin(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody SetPinRequest request) {
+        
+        ApiResponse<String> response = accountService.setTransactionPin(userDetails.getUsername(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/users/change-pin")
+    public ResponseEntity<ApiResponse<String>> changeTransactionPin(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody ChangePinRequest request) {
+        
+        ApiResponse<String> response = accountService.changeTransactionPin(userDetails.getUsername(), request);
+        return ResponseEntity.ok(response);
+    }
 }
