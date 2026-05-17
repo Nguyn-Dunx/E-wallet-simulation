@@ -8,16 +8,20 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reset_password_sessions", schema = "identity", indexes = {
-        @Index(name = "idx_reset_token", columnList = "token"),
-})
+@Table(
+        name = "reset_password_sessions",
+        schema = "identity",
+        indexes = {
+                @Index(name = "idx_reset_token", columnList = "token"),
+        })
 @Getter
 @Setter
-public class ResetPasswordSession{
+public class ResetPasswordSession {
 
     @Id
-    @JoinColumn(name = "id")
-    private BigInteger id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)

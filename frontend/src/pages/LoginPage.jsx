@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Phone, Lock, Eye, EyeOff, Wallet, ArrowRight } from 'lucide-react';
-import toast from 'react-hot-toast';
-import './Auth.css';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth";
+import { Phone, Lock, Eye, EyeOff, Wallet, ArrowRight } from "lucide-react";
+import toast from "react-hot-toast";
+import "./Auth.css";
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ loginKey: '', password: '' });
+  const [form, setForm] = useState({ loginKey: "", password: "" });
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
 
   const validate = () => {
     const e = {};
-    if (!form.loginKey) e.loginKey = 'Vui lòng nhập số điện thoại';
-    if (!form.password)  e.password = 'Vui lòng nhập mật khẩu';
+    if (!form.loginKey) e.loginKey = "Vui lòng nhập số điện thoại";
+    if (!form.password) e.password = "Vui lòng nhập mật khẩu";
     setErrors(e);
     return !Object.keys(e).length;
   };
@@ -24,11 +24,11 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
     try {
-      await login(form.loginKey.trim(), form.password.trim(), 'PHONE');
-      toast.success('Đăng nhập thành công! 🎉');
-      navigate('/dashboard');
+      await login(form.loginKey.trim(), form.password.trim(), "PHONE");
+      toast.success("Đăng nhập thành công! 🎉");
+      navigate("/dashboard");
     } catch (err) {
-      toast.error(err.message || 'Đăng nhập thất bại');
+      toast.error(err.message || "Đăng nhập thất bại");
     }
   };
 
@@ -61,14 +61,18 @@ export default function LoginPage() {
                 <input
                   id="loginKey"
                   type="tel"
-                  className={`form-input ${errors.loginKey ? 'input-error' : ''}`}
+                  className={`form-input ${errors.loginKey ? "input-error" : ""}`}
                   placeholder="0912 345 678"
                   value={form.loginKey}
-                  onChange={e => setForm({ ...form, loginKey: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, loginKey: e.target.value })
+                  }
                   autoComplete="tel"
                 />
               </div>
-              {errors.loginKey && <p className="form-error">{errors.loginKey}</p>}
+              {errors.loginKey && (
+                <p className="form-error">{errors.loginKey}</p>
+              )}
             </div>
 
             <div className="form-group">
@@ -77,40 +81,66 @@ export default function LoginPage() {
                 <Lock size={16} className="form-input-icon" />
                 <input
                   id="password"
-                  type={showPw ? 'text' : 'password'}
-                  className={`form-input ${errors.password ? 'input-error' : ''}`}
+                  type={showPw ? "text" : "password"}
+                  className={`form-input ${errors.password ? "input-error" : ""}`}
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   autoComplete="current-password"
                 />
-                <button type="button" className="form-input-action" onClick={() => setShowPw(!showPw)}>
+                <button
+                  type="button"
+                  className="form-input-action"
+                  onClick={() => setShowPw(!showPw)}
+                >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.password && <p className="form-error">{errors.password}</p>}
+              {errors.password && (
+                <p className="form-error">{errors.password}</p>
+              )}
             </div>
 
             <div className="auth-options">
-              <Link to="/forgot-password" className="auth-link">Quên mật khẩu?</Link>
+              <Link to="/forgot-password" className="auth-link">
+                Quên mật khẩu?
+              </Link>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} id="btn-login">
-              {loading ? <span className="spinner spinner-sm" /> : <ArrowRight size={18} />}
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            <button
+              type="submit"
+              className="btn btn-primary btn-full btn-lg"
+              disabled={loading}
+              id="btn-login"
+            >
+              {loading ? (
+                <span className="spinner spinner-sm" />
+              ) : (
+                <ArrowRight size={18} />
+              )}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
 
-          <div className="divider-text" style={{ marginTop: '24px' }}>
+          <div className="divider-text" style={{ marginTop: "24px" }}>
             <span>Chưa có tài khoản?</span>
           </div>
 
-          <Link to="/register" className="btn btn-secondary btn-full" style={{ marginTop: '12px', textDecoration: 'none' }} id="btn-goto-register">
+          <Link
+            to="/register"
+            className="btn btn-secondary btn-full"
+            style={{ marginTop: "12px", textDecoration: "none" }}
+            id="btn-goto-register"
+          >
             Tạo tài khoản mới
           </Link>
         </div>
 
-        <p className="auth-footer-note">🔒 Bảo mật bởi JWT + Mã PIN giao dịch 2 lớp</p>
+        <p className="auth-footer-note">
+          🔒 Bảo mật bởi JWT + Mã PIN giao dịch 2 lớp
+        </p>
       </div>
     </div>
   );

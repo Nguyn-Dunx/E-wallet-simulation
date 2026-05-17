@@ -46,7 +46,7 @@ public class ResetPasswordService {
     public ApiResponse<String> verifyAndGenerateToken(String phone, String otpCode) {
         User user = userRepository.findByPhone(phone)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid demanded phone number"));
-        SmsLog smsLog = smsLogRepository.findSmsLog(phone, SmsLogType.CHANGE_PASSWORD)
+        SmsLog smsLog = smsLogRepository.findSmsLog(phone, SmsLogType.CHANGE_PASSWORD.toString())
                 .orElseThrow(() -> new IllegalArgumentException("Not found any otp for this request"));
         if (!smsLog.getOtpCode().equals(otpCode)) {
             throw new IllegalArgumentException("Invalid otp code");

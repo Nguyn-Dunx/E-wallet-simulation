@@ -1,19 +1,25 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth";
 import {
-  LayoutDashboard, ArrowLeftRight, ArrowUpRight, CreditCard,
-  Settings, LogOut, Wallet, Shield
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import './Sidebar.css';
+  LayoutDashboard,
+  ArrowLeftRight,
+  ArrowUpRight,
+  CreditCard,
+  Settings,
+  LogOut,
+  Wallet,
+  Shield,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import "./Sidebar.css";
 
 const navItems = [
-  { to: '/dashboard',     icon: LayoutDashboard, label: 'Tổng quan' },
-  { to: '/transfer',      icon: ArrowLeftRight,  label: 'Chuyển tiền' },
-  { to: '/deposit',       icon: Wallet,           label: 'Nạp tiền' },
-  { to: '/withdraw',      icon: ArrowUpRight,     label: 'Rút tiền' },
-  { to: '/history',       icon: CreditCard,       label: 'Lịch sử' },
-  { to: '/settings',      icon: Settings,         label: 'Cài đặt' },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Tổng quan" },
+  { to: "/transfer", icon: ArrowLeftRight, label: "Chuyển tiền" },
+  { to: "/deposit", icon: Wallet, label: "Nạp tiền" },
+  { to: "/withdraw", icon: ArrowUpRight, label: "Rút tiền" },
+  { to: "/history", icon: CreditCard, label: "Lịch sử" },
+  { to: "/settings", icon: Settings, label: "Cài đặt" },
 ];
 
 export default function Sidebar() {
@@ -22,8 +28,8 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     await logout();
-    toast.success('Đã đăng xuất thành công');
-    navigate('/login');
+    toast.success("Đã đăng xuất thành công");
+    navigate("/login");
   };
 
   return (
@@ -39,10 +45,10 @@ export default function Sidebar() {
       {/* User Card */}
       <div className="sidebar-user">
         <div className="user-avatar">
-          {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
+          {user?.displayName?.charAt(0)?.toUpperCase() || "U"}
         </div>
         <div className="user-info">
-          <p className="user-name">{user?.displayName || 'Người dùng'}</p>
+          <p className="user-name">{user?.displayName || "Người dùng"}</p>
           <p className="user-key">{user?.loginKey}</p>
         </div>
       </div>
@@ -55,7 +61,9 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "nav-item--active" : ""}`
+            }
           >
             <Icon size={18} />
             <span>{label}</span>
