@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import TransferPage from './pages/TransferPage';
 import DepositPage from './pages/DepositPage';
@@ -33,48 +34,57 @@ function GuestLayout() {
   return <Outlet />;
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────
-export default function App() {
+// ─── Inner App (needs Router context for useNavigate in AuthProvider) ──────
+function AppRoutes() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.875rem',
-            },
-            success: { iconTheme: { primary: '#16A34A', secondary: 'white' } },
-            error:   { iconTheme: { primary: '#DC2626', secondary: 'white' } },
-          }}
-        />
-        <Routes>
-          {/* Guest routes */}
-          <Route element={<GuestLayout />}>
-            <Route path="/login"    element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-          </Route>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.875rem',
+          },
+          success: { iconTheme: { primary: '#16A34A', secondary: 'white' } },
+          error:   { iconTheme: { primary: '#DC2626', secondary: 'white' } },
+        }}
+      />
+      <Routes>
+        {/* Guest routes */}
+        <Route element={<GuestLayout />}>
+          <Route path="/login"           element={<LoginPage />} />
+          <Route path="/register"        element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        </Route>
 
-          {/* Protected routes */}
-          <Route element={<ProtectedLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/transfer"  element={<TransferPage />} />
-            <Route path="/deposit"   element={<DepositPage />} />
-            <Route path="/withdraw"  element={<WithdrawPage />} />
-            <Route path="/history"   element={<HistoryPage />} />
-            <Route path="/settings"  element={<SettingsPage />} />
-          </Route>
+        {/* Protected routes */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/transfer"  element={<TransferPage />} />
+          <Route path="/deposit"   element={<DepositPage />} />
+          <Route path="/withdraw"  element={<WithdrawPage />} />
+          <Route path="/history"   element={<HistoryPage />} />
+          <Route path="/settings"  element={<SettingsPage />} />
+        </Route>
 
-          {/* Redirects & 404 */}
-          <Route path="/"   element={<Navigate to="/dashboard" replace />} />
-          <Route path="*"   element={<NotFoundPage />} />
-        </Routes>
-      </BrowserRouter>
+        {/* Redirects & 404 */}
+        <Route path="/"   element={<Navigate to="/dashboard" replace />} />
+        <Route path="*"   element={<NotFoundPage />} />
+      </Routes>
     </AuthProvider>
   );
 }
+
+// ─── App ──────────────────────────────────────────────────────────────────
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
+}
+

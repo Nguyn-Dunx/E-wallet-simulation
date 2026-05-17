@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Phone, Lock, Eye, EyeOff, Wallet, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Auth.css';
+
+const SESSION_EXPIRED_MESSAGE_KEY = 'session-expired-message';
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
@@ -12,10 +14,18 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    const message = sessionStorage.getItem(SESSION_EXPIRED_MESSAGE_KEY);
+    if (!message) return;
+
+    sessionStorage.removeItem(SESSION_EXPIRED_MESSAGE_KEY);
+    toast.error(message);
+  }, []);
+
   const validate = () => {
     const e = {};
     if (!form.loginKey) e.loginKey = 'Vui lòng nhập số điện thoại';
-    if (!form.password)  e.password = 'Vui lòng nhập mật khẩu';
+    if (!form.password) e.password = 'Vui lòng nhập mật khẩu';
     setErrors(e);
     return !Object.keys(e).length;
   };
@@ -23,9 +33,10 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
     try {
       await login(form.loginKey.trim(), form.password.trim(), 'PHONE');
-      toast.success('Đăng nhập thành công! 🎉');
+      toast.success('Đăng nhập thành công!');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.message || 'Đăng nhập thất bại');
@@ -37,7 +48,6 @@ export default function LoginPage() {
       <div className="auth-bg-glow" />
 
       <div className="auth-container animate-fade-in">
-        {/* Brand */}
         <div className="auth-brand">
           <div className="auth-logo">
             <Wallet size={28} />
@@ -46,7 +56,6 @@ export default function LoginPage() {
           <p>Ví điện tử thông minh của bạn</p>
         </div>
 
-        {/* Card */}
         <div className="auth-card">
           <div className="auth-card-header">
             <h2>Chào mừng trở lại</h2>
@@ -64,7 +73,7 @@ export default function LoginPage() {
                   className={`form-input ${errors.loginKey ? 'input-error' : ''}`}
                   placeholder="0912 345 678"
                   value={form.loginKey}
-                  onChange={e => setForm({ ...form, loginKey: e.target.value })}
+                  onChange={(e) => setForm({ ...form, loginKey: e.target.value })}
                   autoComplete="tel"
                 />
               </div>
@@ -81,7 +90,7 @@ export default function LoginPage() {
                   className={`form-input ${errors.password ? 'input-error' : ''}`}
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
                   autoComplete="current-password"
                 />
                 <button type="button" className="form-input-action" onClick={() => setShowPw(!showPw)}>
@@ -105,12 +114,17 @@ export default function LoginPage() {
             <span>Chưa có tài khoản?</span>
           </div>
 
-          <Link to="/register" className="btn btn-secondary btn-full" style={{ marginTop: '12px', textDecoration: 'none' }} id="btn-goto-register">
+          <Link
+            to="/register"
+            className="btn btn-secondary btn-full"
+            style={{ marginTop: '12px', textDecoration: 'none' }}
+            id="btn-goto-register"
+          >
             Tạo tài khoản mới
           </Link>
         </div>
 
-        <p className="auth-footer-note">🔒 Bảo mật bởi JWT + Mã PIN giao dịch 2 lớp</p>
+        <p className="auth-footer-note">Bảo mật bởi JWT + Mã PIN giao dịch 2 lớp</p>
       </div>
     </div>
   );
