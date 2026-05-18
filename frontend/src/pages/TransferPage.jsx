@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { transactionApi, walletApi } from '../api/client';
+import { transactionApi } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import PinPad from '../components/PinPad';
 import { formatCurrency } from '../utils/format';

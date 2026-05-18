@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Phone, Lock, Eye, EyeOff, Wallet, ArrowRight } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, Wallet, ArrowRight, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Auth.css';
 
 const SESSION_EXPIRED_MESSAGE_KEY = 'session-expired-message';
+const LOGIN_TYPES = {
+  USER: 'PHONE',
+  ADMIN: 'EMPLOYEE_CODE',
+};
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ loginKey: '', password: '' });
+  const [form, setForm] = useState({ loginKey: '', password: '', loginType: LOGIN_TYPES.USER });
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
+  const isAdminLogin = form.loginType === LOGIN_TYPES.ADMIN;
 
   useEffect(() => {
     const message = sessionStorage.getItem(SESSION_EXPIRED_MESSAGE_KEY);
@@ -24,7 +29,7 @@ export default function LoginPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.loginKey) e.loginKey = 'Vui lòng nhập số điện thoại';
+    if (!form.loginKey) e.loginKey = isAdminLogin ? 'Vui lòng nhập mã nhân viên' : 'Vui lòng nhập số điện thoại';
     if (!form.password) e.password = 'Vui lòng nhập mật khẩu';
     setErrors(e);
     return !Object.keys(e).length;
@@ -35,12 +40,17 @@ export default function LoginPage() {
     if (!validate()) return;
 
     try {
-      await login(form.loginKey.trim(), form.password.trim(), 'PHONE');
+      const data = await login(form.loginKey.trim(), form.password.trim(), form.loginType);
       toast.success('Đăng nhập thành công!');
-      navigate('/dashboard');
+      navigate(data.roles?.includes('ROLE_ADMIN') ? '/admin/accounts' : '/dashboard');
     } catch (err) {
       toast.error(err.message || 'Đăng nhập thất bại');
     }
+  };
+
+  const handleLoginTypeChange = (loginType) => {
+    setForm({ ...form, loginKey: '', loginType });
+    setErrors({});
   };
 
   return (
@@ -63,18 +73,40 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="auth-form" noValidate>
+            <div className="login-type-switch" role="group" aria-label="Chọn loại tài khoản">
+              <button
+                type="button"
+                className={`login-type-option ${!isAdminLogin ? 'active' : ''}`}
+                onClick={() => handleLoginTypeChange(LOGIN_TYPES.USER)}
+              >
+                <Phone size={16} />
+                <span>Người dùng</span>
+              </button>
+              <button
+                type="button"
+                className={`login-type-option ${isAdminLogin ? 'active' : ''}`}
+                onClick={() => handleLoginTypeChange(LOGIN_TYPES.ADMIN)}
+              >
+                <ShieldCheck size={16} />
+                <span>Admin</span>
+              </button>
+            </div>
+
             <div className="form-group">
-              <label className="form-label">Số điện thoại</label>
+              <label className="form-label">{isAdminLogin ? 'Mã nhân viên' : 'Số điện thoại'}</label>
               <div className="form-input-wrapper">
-                <Phone size={16} className="form-input-icon" />
+                {isAdminLogin
+                  ? <ShieldCheck size={16} className="form-input-icon" />
+                  : <Phone size={16} className="form-input-icon" />
+                }
                 <input
                   id="loginKey"
-                  type="tel"
+                  type={isAdminLogin ? 'text' : 'tel'}
                   className={`form-input ${errors.loginKey ? 'input-error' : ''}`}
-                  placeholder="0912 345 678"
+                  placeholder={isAdminLogin ? 'ADMIN001' : '0912 345 678'}
                   value={form.loginKey}
                   onChange={(e) => setForm({ ...form, loginKey: e.target.value })}
-                  autoComplete="tel"
+                  autoComplete={isAdminLogin ? 'username' : 'tel'}
                 />
               </div>
               {errors.loginKey && <p className="form-error">{errors.loginKey}</p>}

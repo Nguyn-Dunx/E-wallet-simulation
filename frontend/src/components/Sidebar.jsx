@@ -2,33 +2,37 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, ArrowLeftRight, ArrowUpRight, CreditCard,
-  Settings, LogOut, Wallet, Shield
+  Settings, LogOut, Wallet, Shield, UsersRound
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Sidebar.css';
 
-const navItems = [
-  { to: '/dashboard',     icon: LayoutDashboard, label: 'Tổng quan' },
-  { to: '/transfer',      icon: ArrowLeftRight,  label: 'Chuyển tiền' },
-  { to: '/deposit',       icon: Wallet,           label: 'Nạp tiền' },
-  { to: '/withdraw',      icon: ArrowUpRight,     label: 'Rút tiền' },
-  { to: '/history',       icon: CreditCard,       label: 'Lịch sử' },
-  { to: '/settings',      icon: Settings,         label: 'Cài đặt' },
+const userNavItems = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Tong quan' },
+  { to: '/transfer', icon: ArrowLeftRight, label: 'Chuyen tien' },
+  { to: '/deposit', icon: Wallet, label: 'Nap tien' },
+  { to: '/withdraw', icon: ArrowUpRight, label: 'Rut tien' },
+  { to: '/history', icon: CreditCard, label: 'Lich su' },
+  { to: '/settings', icon: Settings, label: 'Cai dat' },
+];
+
+const adminNavItems = [
+  { to: '/admin/accounts', icon: UsersRound, label: 'Tai khoan' },
 ];
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const navItems = isAdmin ? adminNavItems : userNavItems;
 
   const handleLogout = async () => {
     await logout();
-    toast.success('Đã đăng xuất thành công');
+    toast.success('Da dang xuat thanh cong');
     navigate('/login');
   };
 
   return (
     <aside className="sidebar">
-      {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon">
           <Wallet size={22} />
@@ -36,20 +40,18 @@ export default function Sidebar() {
         <span className="logo-text">ViPay</span>
       </div>
 
-      {/* User Card */}
       <div className="sidebar-user">
         <div className="user-avatar">
           {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="user-info">
-          <p className="user-name">{user?.displayName || 'Người dùng'}</p>
+          <p className="user-name">{user?.displayName || 'Nguoi dung'}</p>
           <p className="user-key">{user?.loginKey}</p>
         </div>
       </div>
 
       <hr className="sidebar-divider" />
 
-      {/* Nav */}
       <nav className="sidebar-nav">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
@@ -66,11 +68,11 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <div className="security-badge">
           <Shield size={12} />
-          <span>Bảo mật 2 lớp</span>
+          <span>{isAdmin ? 'Quan tri he thong' : 'Bao mat 2 lop'}</span>
         </div>
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} />
-          <span>Đăng xuất</span>
+          <span>Dang xuat</span>
         </button>
       </div>
     </aside>

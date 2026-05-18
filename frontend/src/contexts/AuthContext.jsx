@@ -87,7 +87,9 @@ export function AuthProvider({ children }) {
     if (!options.localOnly) {
       try {
         await authApi.logout();
-      } catch (_) {}
+      } catch {
+        // Session is cleared locally even if the server-side logout request fails.
+      }
     }
 
     clearSession();

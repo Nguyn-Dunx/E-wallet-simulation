@@ -21,7 +21,6 @@ export default function TransactionItem({ txn, walletId, onClick }) {
   const direct = normalizeDirection(txn.direction ?? txn.direct);
 
   const isIncomingTransfer = isTransfer && walletId && txn.receiverWalletId && String(txn.receiverWalletId) === String(walletId);
-
   const isPositive = direct
     ? direct === 'IN'
     : (isDeposit || isIncomingTransfer);

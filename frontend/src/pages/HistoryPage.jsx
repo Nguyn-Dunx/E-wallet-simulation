@@ -35,7 +35,7 @@ export default function HistoryPage() {
   };
 
   const fetchWallet = useCallback(async () => {
-    try { const res = await walletApi.getMyWallet(); setWallet(res.data || res); } catch (_) {}
+    try { const res = await walletApi.getMyWallet(); setWallet(res.data || res); } catch { setWallet(null); }
   }, []);
 
   const fetchHistory = useCallback(async () => {
@@ -51,7 +51,7 @@ export default function HistoryPage() {
       const d = res.data || res;
       setTxns(d.content || []);
       setTotalPages(d.totalPages || 0);
-    } catch (_) { setTxns([]); }
+    } catch { setTxns([]); }
     finally { setLoading(false); }
   }, [page, range]);
 

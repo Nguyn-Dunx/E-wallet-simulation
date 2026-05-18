@@ -100,6 +100,43 @@
   font-weight: 500;
 }
 
+.login-type-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.login-type-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.login-type-option:hover {
+  color: var(--text-primary);
+}
+
+.login-type-option.active {
+  background: var(--bg-card);
+  color: var(--primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
 /* Footer note */
 .auth-footer-note {
   text-align: center;

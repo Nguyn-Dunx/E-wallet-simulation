@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/client';
 import { Phone, Lock, Eye, EyeOff, User, Wallet, ArrowRight, CheckCircle } from 'lucide-react';

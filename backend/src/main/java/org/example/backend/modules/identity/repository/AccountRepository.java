@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.example.backend.modules.identity.common.enums.AccountStatus;
 import org.example.backend.modules.identity.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,13 +14,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface AccountRepository extends JpaRepository<Account, UUID> {
+public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpecificationExecutor<Account> {
     @Query("""
         select a from Account a
         join fetch a.role
         left join fetch a.user
         left join fetch a.admin
-        where a.loginKey = :loginKey
+        where (a.loginKey = :loginKey or a.admin.employeeCode = :loginKey)
         and a.deletedAt is null
     """)
     Optional<Account> findAuthAccount(String loginKey);
@@ -40,7 +41,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     Optional<Integer> findTokenVersion(@Param("loginKey") String loginKey);
 
     // Trong AccountRepository.java
-    @Query("SELECT a.status FROM Account a WHERE a.loginKey = :username")
+    @Query("SELECT a.status FROM Account a WHERE a.loginKey = :loginKey")
     Optional<AccountStatus> findStatusByLoginKey(@Param("loginKey") String loginKey);
 
     boolean existsByLoginKeyIgnoreCase(@NotBlank(message = "{validation.auth.loginKey.required}") String loginKey);

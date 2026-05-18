@@ -212,7 +212,7 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Not found account"));
         UUID userId = account.getUser().getId();
         account.setTokenVersion(account.getTokenVersion() + 1);
-        account.setStatus(AccountStatus.DELETED);
+        account.setStatus(AccountStatus.DISABLED);
         account.setDeletedAt(Instant.now());
         accountRepository.save(account);
         UUID jti = jwtUtils.getJti(token);

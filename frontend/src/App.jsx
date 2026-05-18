@@ -11,12 +11,10 @@ import DepositPage from './pages/DepositPage';
 import WithdrawPage from './pages/WithdrawPage';
 import HistoryPage from './pages/HistoryPage';
 import SettingsPage from './pages/SettingsPage';
+import AdminAccountsPage from './pages/AdminAccountsPage';
 import { NotFoundPage } from './pages/ErrorPages';
 
-// ─── Protected layout ─────────────────────────────────────────────────────
-function ProtectedLayout() {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+function AppShell() {
   return (
     <div className="app-layout">
       <Sidebar />
@@ -27,14 +25,26 @@ function ProtectedLayout() {
   );
 }
 
-// ─── Guest layout (redirect if logged in) ─────────────────────────────────
+function UserLayout() {
+  const { isAuthenticated, isAdmin } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (isAdmin) return <Navigate to="/admin/accounts" replace />;
+  return <AppShell />;
+}
+
+function AdminLayout() {
+  const { isAuthenticated, isAdmin } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  return <AppShell />;
+}
+
 function GuestLayout() {
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  const { isAuthenticated, isAdmin } = useAuth();
+  if (isAuthenticated) return <Navigate to={isAdmin ? '/admin/accounts' : '/dashboard'} replace />;
   return <Outlet />;
 }
 
-// ─── Inner App (needs Router context for useNavigate in AuthProvider) ──────
 function AppRoutes() {
   return (
     <AuthProvider>
@@ -50,36 +60,43 @@ function AppRoutes() {
             fontSize: '0.875rem',
           },
           success: { iconTheme: { primary: '#16A34A', secondary: 'white' } },
-          error:   { iconTheme: { primary: '#DC2626', secondary: 'white' } },
+          error: { iconTheme: { primary: '#DC2626', secondary: 'white' } },
         }}
       />
       <Routes>
-        {/* Guest routes */}
         <Route element={<GuestLayout />}>
-          <Route path="/login"           element={<LoginPage />} />
-          <Route path="/register"        element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
 
-        {/* Protected routes */}
-        <Route element={<ProtectedLayout />}>
+        <Route element={<UserLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/transfer"  element={<TransferPage />} />
-          <Route path="/deposit"   element={<DepositPage />} />
-          <Route path="/withdraw"  element={<WithdrawPage />} />
-          <Route path="/history"   element={<HistoryPage />} />
-          <Route path="/settings"  element={<SettingsPage />} />
+          <Route path="/transfer" element={<TransferPage />} />
+          <Route path="/deposit" element={<DepositPage />} />
+          <Route path="/withdraw" element={<WithdrawPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
 
-        {/* Redirects & 404 */}
-        <Route path="/"   element={<Navigate to="/dashboard" replace />} />
-        <Route path="*"   element={<NotFoundPage />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<Navigate to="/admin/accounts" replace />} />
+          <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+        </Route>
+
+        <Route path="/" element={<RoleRedirect />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AuthProvider>
   );
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────
+function RoleRedirect() {
+  const { isAuthenticated, isAdmin } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Navigate to={isAdmin ? '/admin/accounts' : '/dashboard'} replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -87,4 +104,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-

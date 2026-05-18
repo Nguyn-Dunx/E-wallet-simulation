@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { walletApi, transactionApi } from '../api/client';
 import PinPad from '../components/PinPad';
 import { formatCurrency } from '../utils/format';
@@ -17,16 +17,18 @@ export default function WithdrawPage() {
   const [form, setForm] = useState({ sourceId: '', amount: '', description: '' });
   const [errors, setErrors] = useState({});
 
-  const loadSources = async () => {
+  const loadSources = useCallback(async () => {
     if (sources.length) return;
     try {
       const [walletRes, srcRes] = await Promise.all([walletApi.getMyWallet(), walletApi.getLinkedSources()]);
       setWallet(walletRes.data || walletRes);
       setSources(srcRes.data || srcRes || []);
-    } catch (_) {}
-  };
+    } catch {
+      setSources([]);
+    }
+  }, [sources.length]);
 
-  useEffect(() => { loadSources(); }, []);
+  useEffect(() => { loadSources(); }, [loadSources]);
 
   const validate = () => {
     const e = {};

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { walletApi, transactionApi } from '../api/client';
 import PinPad from '../components/PinPad';
 import { formatCurrency } from '../utils/format';
-import { ArrowDownLeft, DollarSign, CreditCard, MessageSquare, ArrowRight, ChevronLeft, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowDownLeft, DollarSign, ArrowRight, ChevronLeft, CheckCircle, XCircle } from 'lucide-react';
 import './TransactionFlow.css';
 
 const STEPS = ['Nhập thông tin', 'Xác nhận', 'Nhập PIN', 'Kết quả'];
@@ -12,22 +12,22 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
   const [pin, setPin]       = useState('');
   const [result, setResult] = useState(null);
-  const [wallet, setWallet] = useState(null);
   const [sources, setSources] = useState([]);
   const [form, setForm]     = useState({ sourceId: '', amount: '', description: '' });
   const [errors, setErrors] = useState({});
 
   // Load linked sources once
-  const loadSources = async () => {
+  const loadSources = useCallback(async () => {
     if (sources.length) return;
     try {
-      const [walletRes, srcRes] = await Promise.all([walletApi.getMyWallet(), walletApi.getLinkedSources()]);
-      setWallet(walletRes.data || walletRes);
+      const srcRes = await walletApi.getLinkedSources();
       setSources(srcRes.data || srcRes || []);
-    } catch (_) {}
-  };
+    } catch {
+      setSources([]);
+    }
+  }, [sources.length]);
 
-  useEffect(() => { loadSources(); }, []);
+  useEffect(() => { loadSources(); }, [loadSources]);
 
   const validate = () => {
     const e = {};

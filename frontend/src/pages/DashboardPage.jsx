@@ -50,7 +50,9 @@ export default function DashboardPage() {
     try {
       const res = await transactionApi.getHistory(0, 8);
       setTxns(res.data?.content || res.content || []);
-    } catch (_) {} finally { setTxnLoading(false); }
+    } catch {
+      setTxns([]);
+    } finally { setTxnLoading(false); }
   }, []);
 
   const normalizeDirection = useCallback((raw) => {
@@ -136,7 +138,7 @@ export default function DashboardPage() {
       });
       const list = res.data?.content || res.content || [];
       setSummary(buildSummary(list, walletId));
-    } catch (_) {
+    } catch {
       setSummary(buildSummary([], walletId));
     } finally { setSummaryLoading(false); }
   }, [buildSummary]);

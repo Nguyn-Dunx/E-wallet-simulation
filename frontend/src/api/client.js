@@ -33,7 +33,6 @@ async function request(path, options = {}) {
 
 const get  = (path) => request(path, { method: 'GET' });
 const post = (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) });
-const put  = (path, body) => request(path, { method: 'PUT', body: JSON.stringify(body) });
 const del  = (path, body) => request(path, { method: 'DELETE', body: JSON.stringify(body) });
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
@@ -82,4 +81,19 @@ export const transactionApi = {
   getDetail:    (txnCode)          => get(`/transactions/${txnCode}`),
 };
 
-export default { authApi, walletApi, transactionApi };
+export const adminApi = {
+  getAccounts: ({ page = 0, size = 10, keyword = '', status = '', role = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.set('page', page);
+    params.set('size', size);
+    if (keyword) params.set('keyword', keyword);
+    if (status) params.set('status', status);
+    if (role) params.set('role', role);
+    return get(`/admin/accounts?${params.toString()}`);
+  },
+  lockAccount: (accountId) => post(`/admin/accounts/${accountId}/lock`),
+  unlockAccount: (accountId) => post(`/admin/accounts/${accountId}/unlock`),
+  deleteAccount: (accountId) => del(`/admin/accounts/${accountId}`),
+};
+
+export default { authApi, walletApi, transactionApi, adminApi };
