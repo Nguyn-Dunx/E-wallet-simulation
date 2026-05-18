@@ -19,4 +19,8 @@ public class TransactionResponse {
     private Instant createdAt;
 
     private String direction;
+    private String senderAccountNumber;
+    private String senderAccountName;
+    private String receiverAccountNumber;
+    private String receiverAccountName;
 }

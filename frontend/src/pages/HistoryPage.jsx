@@ -16,6 +16,16 @@ export default function HistoryPage() {
   const [selected, setSelected] = useState(null);
   const PAGE_SIZE = 10;
 
+  const getPageMeta = (pageData) => ({
+    totalPages: pageData.totalPages ?? pageData.page?.totalPages ?? 0,
+  });
+
+  const formatParty = (name, number) => {
+    if (!name && !number) return 'Khong xac dinh';
+    if (!name || name === number) return number || name;
+    return `${name} (${number})`;
+  };
+
   const getRangeDates = (value) => {
     if (value === 'all') return {};
     const now = new Date();
@@ -49,8 +59,9 @@ export default function HistoryPage() {
         endDate,
       });
       const d = res.data || res;
+      const meta = getPageMeta(d);
       setTxns(d.content || []);
-      setTotalPages(d.totalPages || 0);
+      setTotalPages(meta.totalPages);
     } catch { setTxns([]); }
     finally { setLoading(false); }
   }, [page, range]);
@@ -60,7 +71,11 @@ export default function HistoryPage() {
 
   const filtered = txns.filter(t =>
     !search || t.transactionCode?.toLowerCase().includes(search.toLowerCase()) ||
-    t.description?.toLowerCase().includes(search.toLowerCase())
+    t.description?.toLowerCase().includes(search.toLowerCase()) ||
+    t.senderAccountNumber?.toLowerCase().includes(search.toLowerCase()) ||
+    t.senderAccountName?.toLowerCase().includes(search.toLowerCase()) ||
+    t.receiverAccountNumber?.toLowerCase().includes(search.toLowerCase()) ||
+    t.receiverAccountName?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -163,6 +178,14 @@ export default function HistoryPage() {
               {[
                 { label: 'Mã giao dịch', value: selected.transactionCode },
                 { label: 'Loại giao dịch', value: selected.type },
+                {
+                  label: 'Tài khoản chuyển đi',
+                  value: formatParty(selected.senderAccountName, selected.senderAccountNumber),
+                },
+                {
+                  label: 'Tài khoản chuyển đến',
+                  value: formatParty(selected.receiverAccountName, selected.receiverAccountNumber),
+                },
                 { label: 'Số tiền', value: formatCurrency(selected.amount) },
                 { label: 'Trạng thái', value: (
                   <span className={`badge badge-${selected.status === 'SUCCESS' ? 'success' : selected.status === 'FAILED' ? 'danger' : 'warning'}`}>

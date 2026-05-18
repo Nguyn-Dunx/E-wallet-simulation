@@ -3,6 +3,12 @@ import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import './TransactionItem.css';
 
 export default function TransactionItem({ txn, walletId, onClick }) {
+  const formatParty = (name, number) => {
+    if (!name && !number) return 'Khong xac dinh';
+    if (!name || name === number) return number || name;
+    return `${name} (${number})`;
+  };
+
   const normalizeDirection = (raw) => {
     if (raw === null || raw === undefined) return null;
     const v = String(raw).trim().toUpperCase();
@@ -28,6 +34,8 @@ export default function TransactionItem({ txn, walletId, onClick }) {
   const label = isTransfer
     ? (txn.description || (isPositive ? 'Nhan tien' : 'Chuyen tien'))
     : getTransactionLabel(txn);
+  const sender = formatParty(txn.senderAccountName, txn.senderAccountNumber);
+  const receiver = formatParty(txn.receiverAccountName, txn.receiverAccountNumber);
 
   const IconComponent = isPositive ? ArrowDownLeft : ArrowUpRight;
   const iconColor     = isPositive ? 'var(--success)' : 'var(--danger)';
@@ -41,6 +49,7 @@ export default function TransactionItem({ txn, walletId, onClick }) {
 
       <div className="txn-info">
         <p className="txn-label">{label}</p>
+        <p className="txn-party">{`Tu ${sender} -> Den ${receiver}`}</p>
         <p className="txn-date">{formatDateTime(txn.createdAt)}</p>
       </div>
 

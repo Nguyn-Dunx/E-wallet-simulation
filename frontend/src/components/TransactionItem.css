@@ -35,6 +35,15 @@
 }
 .txn-date { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
+.txn-party {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .txn-amount-wrap {
   display: flex;
   flex-direction: column;

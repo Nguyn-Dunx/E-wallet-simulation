@@ -12,9 +12,12 @@ import org.example.backend.modules.transaction.enums.TransStatus;
 import org.example.backend.modules.transaction.enums.TransType;
 import org.example.backend.modules.transaction.mapper.TransactionMapper;
 import org.example.backend.modules.transaction.repository.TransactionRepository;
+import org.example.backend.modules.identity.entity.Account;
+import org.example.backend.modules.identity.repository.AccountRepository;
 import org.example.backend.modules.wallet.entity.LinkedSource;
 import org.example.backend.modules.wallet.entity.Wallet;
 import org.example.backend.modules.wallet.repository.LinkedSourceRepository;
+import org.example.backend.modules.wallet.repository.WalletRepository;
 import org.example.backend.modules.wallet.service.internal.WalletInternalService;
 import org.example.backend.modules.identity.services.internal.IdentityInternalService;
 import org.springframework.data.domain.Page;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,8 @@ public class TransactionServiceImpl implements TransactionService {
     final TransactionRepository transactionRepository;
     final TransactionMapper transactionMapper;
     final LinkedSourceRepository linkedSourceRepository;
+    final WalletRepository walletRepository;
+    final AccountRepository accountRepository;
 
     private final WalletInternalService walletInternalService;
     private final IdentityInternalService identityInternalService;
@@ -102,6 +108,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         response.setSenderWalletId(txn.getSenderWalletId());
         response.setReceiverWalletId(txn.getReceiverWalletId());
+        fillAccountInfo(response, txn);
 
         // Bắt đầu logic gán chiều giao dịch (direction)
         if (txn.getType() == TransType.DEPOSIT) {
@@ -120,6 +127,49 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         return response;
+    }
+
+    private void fillAccountInfo(TransactionResponse response, Transaction txn) {
+        applyAccountInfo(
+                txn.getSenderWalletId(),
+                response::setSenderAccountNumber,
+                response::setSenderAccountName
+        );
+        applyAccountInfo(
+                txn.getReceiverWalletId(),
+                response::setReceiverAccountNumber,
+                response::setReceiverAccountName
+        );
+    }
+
+    private void applyAccountInfo(
+            UUID walletId,
+            Consumer<String> accountNumberSetter,
+            Consumer<String> accountNameSetter
+    ) {
+        if (walletId == null) {
+            accountNumberSetter.accept("Ngoai he thong");
+            accountNameSetter.accept("Ngoai he thong");
+            return;
+        }
+
+        walletRepository.findByIdAndDeletedAtIsNull(walletId)
+                .map(Wallet::getUserId)
+                .flatMap(accountRepository::findById)
+                .ifPresentOrElse(account -> {
+                    accountNumberSetter.accept(account.getLoginKey());
+                    accountNameSetter.accept(resolveAccountName(account));
+                }, () -> {
+                    accountNumberSetter.accept("Khong xac dinh");
+                    accountNameSetter.accept("Khong xac dinh");
+                });
+    }
+
+    private String resolveAccountName(Account account) {
+        if (account.getUser() != null && account.getUser().getFullName() != null) {
+            return account.getUser().getFullName();
+        }
+        return account.getLoginKey();
     }
 
     @Override
