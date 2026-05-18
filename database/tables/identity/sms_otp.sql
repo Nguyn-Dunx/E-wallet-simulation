@@ -21,14 +21,17 @@ CREATE TABLE identity.sms_logs_default PARTITION OF identity.sms_logs DEFAULT;
 CREATE TABLE identity.sms_logs_y2026_m05_d13 PARTITION OF identity.sms_logs
     FOR VALUES FROM ('2026-05-13 00:00:00+07') TO ('2026-05-14 00:00:00+07');
 
+-- update table (id)
+DROP TABLE IF EXISTS identity.reset_password_sessions;
 CREATE TABLE identity.reset_password_sessions (
-    id int PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES identity.accounts(id) ON DELETE CASCADE,
     token VARCHAR(255) NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL
 );
 
 CREATE INDEX idx_reset_token ON identity.reset_password_sessions(token);
+
 
 ALTER TABLE identity.reset_password_sessions
 ALTER COLUMN id
