@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { transactionApi } from '../api/client';
+import { useEffect, useState } from 'react';
+import { transactionApi, walletApi } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import PinPad from '../components/PinPad';
 import { formatCurrency } from '../utils/format';
@@ -13,6 +13,7 @@ export default function TransferPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [wallet, setWallet] = useState(null);
   const [pin, setPin] = useState('');
   const [result, setResult] = useState(null);
   const [form, setForm] = useState({
@@ -21,13 +22,43 @@ export default function TransferPage() {
     description: '',
   });
   const [errors, setErrors] = useState({});
+  const currentBalance = wallet?.balance != null ? Number(wallet.balance) : null;
+  const transferAmount = Number(form.amount) || 0;
+  const balanceAfterTransfer = currentBalance != null ? currentBalance - transferAmount : null;
+
+  useEffect(() => {
+    let active = true;
+
+    walletApi.getMyWallet()
+      .then((res) => {
+        if (active) setWallet(res.data || res);
+      })
+      .catch(() => {
+        if (active) setWallet(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const validate = () => {
     const e = {};
+    const amount = Number(form.amount);
     if (!form.receiverLoginKey.trim()) e.receiverLoginKey = 'Vui lòng nhập số điện thoại người nhận';
-    if (!form.amount || Number(form.amount) <= 0) e.amount = 'Vui lòng nhập số tiền hợp lệ';
+    if (!form.amount || amount <= 0) e.amount = 'Vui lòng nhập số tiền hợp lệ';
+    else if (currentBalance == null) e.amount = 'Chưa tải được số dư ví, vui lòng thử lại sau vài giây';
+    else if (amount > currentBalance) e.amount = `Số dư không đủ. Số dư hiện tại: ${formatCurrency(currentBalance)}`;
     setErrors(e);
     return !Object.keys(e).length;
+  };
+
+  const handleGoToPin = () => {
+    if (!validate()) {
+      setStep(0);
+      return;
+    }
+    setStep(2);
   };
 
   const handleConfirm = (e) => {
@@ -97,6 +128,11 @@ export default function TransferPage() {
             <h2>Thông tin chuyển tiền</h2>
           </div>
 
+          <div className="balance-summary">
+            <span>Số dư hiện tại</span>
+            <strong>{currentBalance == null ? 'Đang tải...' : formatCurrency(currentBalance)}</strong>
+          </div>
+
           <form onSubmit={handleConfirm} className="txn-form">
             <div className="form-group">
               <label className="form-label">Số điện thoại người nhận</label>
@@ -129,6 +165,9 @@ export default function TransferPage() {
                 />
               </div>
               {errors.amount && <p className="form-error">{errors.amount}</p>}
+              {currentBalance != null && (
+                <p className="text-muted text-sm">Số dư khả dụng: {formatCurrency(currentBalance)}</p>
+              )}
               {/* Quick amount buttons */}
               <div className="quick-amounts">
                 {[50000, 100000, 200000, 500000].map(amt => (
@@ -170,7 +209,9 @@ export default function TransferPage() {
             {[
               { label: 'Loại giao dịch', value: 'Chuyển tiền' },
               { label: 'Số điện thoại nhận', value: form.receiverLoginKey },
+              { label: 'Số dư hiện tại', value: currentBalance == null ? 'Đang tải...' : formatCurrency(currentBalance) },
               { label: 'Số tiền', value: <strong className="text-xl text-danger">-{formatCurrency(form.amount)}</strong> },
+              { label: 'Số dư sau chuyển', value: balanceAfterTransfer == null ? 'Đang tải...' : formatCurrency(balanceAfterTransfer) },
               { label: 'Lời nhắn', value: form.description || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="review-row">
@@ -182,7 +223,7 @@ export default function TransferPage() {
           <div className="review-notice">
             ⚠️ Vui lòng kiểm tra kỹ thông tin trước khi xác nhận. Giao dịch không thể hoàn tác.
           </div>
-          <button className="btn btn-primary btn-full btn-lg" id="btn-goto-pin" onClick={() => setStep(2)}>
+          <button className="btn btn-primary btn-full btn-lg" id="btn-goto-pin" onClick={handleGoToPin}>
             <ArrowRight size={18} /> Nhập mã PIN
           </button>
         </div>

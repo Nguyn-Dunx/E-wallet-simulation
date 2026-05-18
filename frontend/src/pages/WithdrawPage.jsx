@@ -16,6 +16,9 @@ export default function WithdrawPage() {
   const [sources, setSources] = useState([]);
   const [form, setForm] = useState({ sourceId: '', amount: '', description: '' });
   const [errors, setErrors] = useState({});
+  const currentBalance = wallet?.balance != null ? Number(wallet.balance) : null;
+  const withdrawAmount = Number(form.amount) || 0;
+  const balanceAfterWithdraw = currentBalance != null ? currentBalance - withdrawAmount : null;
 
   const loadSources = useCallback(async () => {
     if (sources.length) return;
@@ -34,11 +37,21 @@ export default function WithdrawPage() {
     const e = {};
     if (!form.sourceId) e.sourceId = 'Vui long chon nguon tien';
     if (!form.amount || Number(form.amount) <= 0) e.amount = 'Nhap so tien hop le';
-    if (wallet?.balance != null && Number(form.amount) > Number(wallet.balance)) {
-      e.amount = 'So du khong du de rut';
+    else if (currentBalance == null) {
+      e.amount = 'Chua tai duoc so du vi, vui long thu lai sau vai giay';
+    } else if (Number(form.amount) > currentBalance) {
+      e.amount = `So du khong du. So du hien tai: ${formatCurrency(currentBalance)}`;
     }
     setErrors(e);
     return !Object.keys(e).length;
+  };
+
+  const handleGoToPin = () => {
+    if (!validate()) {
+      setStep(0);
+      return;
+    }
+    setStep(2);
   };
 
   const handleSubmit = async () => {
@@ -92,11 +105,10 @@ export default function WithdrawPage() {
             <h2>Rut tien ve ngan hang</h2>
           </div>
 
-          {wallet && (
-            <div className="info-chip" style={{ marginBottom: 'var(--space-md)' }}>
-              So du hien tai: <strong>{formatCurrency(wallet.balance)}</strong>
-            </div>
-          )}
+          <div className="balance-summary">
+            <span>So du hien tai</span>
+            <strong>{currentBalance == null ? 'Dang tai...' : formatCurrency(currentBalance)}</strong>
+          </div>
 
           <div className="txn-form">
             <div className="form-group">
@@ -138,6 +150,9 @@ export default function WithdrawPage() {
                 />
               </div>
               {errors.amount && <p className="form-error">{errors.amount}</p>}
+              {currentBalance != null && (
+                <p className="text-muted text-sm">So du kha dung: {formatCurrency(currentBalance)}</p>
+              )}
               <div className="quick-amounts">
                 {[100000, 200000, 500000, 1000000].map(amt => (
                   <button
@@ -184,7 +199,9 @@ export default function WithdrawPage() {
           <div className="review-list">
             {[
               { label: 'Tai khoan nhan', value: selectedSource ? `${selectedSource.bankName || 'Ngan hang'} - ${selectedSource.accountNumber}` : form.sourceId },
+              { label: 'So du hien tai', value: currentBalance == null ? 'Dang tai...' : formatCurrency(currentBalance) },
               { label: 'So tien rut', value: <strong className="text-xl text-danger">-{formatCurrency(form.amount)}</strong> },
+              { label: 'So du sau rut', value: balanceAfterWithdraw == null ? 'Dang tai...' : formatCurrency(balanceAfterWithdraw) },
               { label: 'Loi nhan', value: form.description || '-' },
             ].map(({ label, value }) => (
               <div key={label} className="review-row">
@@ -193,7 +210,7 @@ export default function WithdrawPage() {
               </div>
             ))}
           </div>
-          <button className="btn btn-primary btn-full btn-lg" id="btn-withdraw-goto-pin" onClick={() => setStep(2)}>
+          <button className="btn btn-primary btn-full btn-lg" id="btn-withdraw-goto-pin" onClick={handleGoToPin}>
             <ArrowRight size={18} /> Nhap ma PIN
           </button>
         </div>
