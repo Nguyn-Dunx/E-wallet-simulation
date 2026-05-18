@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { authApi, walletApi } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -267,7 +267,7 @@ function ChangePasswordForm() {
   );
 }
 
-function SetPinForm() {
+function SetPinForm({ onPinSet }) {
   const [form, setForm] = useState({ pin: "", confirmPin: "" });
   const [loading, setLoading] = useState(false);
 
@@ -286,6 +286,7 @@ function SetPinForm() {
       await authApi.setPin({ pin: form.pin, confirmPin: form.confirmPin });
       toast.success("Đã thiết lập mã PIN giao dịch!");
       setForm({ pin: "", confirmPin: "" });
+      if (typeof onPinSet === 'function') onPinSet();
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -346,6 +347,12 @@ function ChangePinForm() {
   });
   const [loading, setLoading] = useState(false);
 
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotStep, setForgotStep] = useState(0); // 0: request otp, 1: confirm
+  const [forgotForm, setForgotForm] = useState({ otp: "", newPin: "", confirmNewPin: "" });
+  const [receivedOtp, setReceivedOtp] = useState("");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.newPin !== form.confirmNewPin) {
@@ -365,6 +372,56 @@ function ChangePinForm() {
       toast.error(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestForgotOtp = async () => {
+    setForgotLoading(true);
+    try {
+      const res = await authApi.forgotPinCreateOtp();
+      const otpFromServer = res?.data?.otpCode || '';
+      setReceivedOtp(String(otpFromServer));
+      toast.success('Mã OTP đã được gửi!');
+      setForgotStep(1);
+    } catch (err) {
+      toast.error(err.message || 'Không thể gửi OTP, thử lại sau');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleConfirmForgotPin = async (e) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(forgotForm.otp)) {
+      toast.error('OTP phải là 6 chữ số');
+      return;
+    }
+    if (!/^\d{6}$/.test(forgotForm.newPin)) {
+      toast.error('Mã PIN phải là 6 chữ số');
+      return;
+    }
+    if (forgotForm.newPin !== forgotForm.confirmNewPin) {
+      toast.error('Mã PIN xác nhận không khớp');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      await authApi.forgotPinConfirm({
+        otp: forgotForm.otp,
+        newPin: forgotForm.newPin,
+        confirmNewPin: forgotForm.confirmNewPin,
+      });
+      toast.success('Đã đặt lại mã PIN thành công!');
+      setShowForgot(false);
+      setForgotStep(0);
+      setForgotForm({ otp: '', newPin: '', confirmNewPin: '' });
+      setReceivedOtp('');
+      setForm({ oldPin: '', newPin: '', confirmNewPin: '' });
+    } catch (err) {
+      toast.error(err.message || 'Đặt lại mã PIN thất bại');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -427,13 +484,178 @@ function ChangePinForm() {
         {loading ? <span className="spinner spinner-sm" /> : null}
         Đổi mã PIN
       </button>
+
+      <button
+        type="button"
+        className="btn btn-ghost"
+        id="btn-forgot-pin"
+        onClick={() => setShowForgot((v) => !v)}
+      >
+        Quên mã PIN?
+      </button>
+
+      {showForgot && (
+        <div
+          style={{
+            padding: 'var(--space-md)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-glass)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-md)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Đặt lại mã PIN</div>
+              <div className="text-muted text-sm">Gửi OTP để xác nhận và đặt PIN mới</div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                setShowForgot(false);
+                setForgotStep(0);
+                setForgotForm({ otp: '', newPin: '', confirmNewPin: '' });
+                setReceivedOtp('');
+              }}
+            >
+              Hủy
+            </button>
+          </div>
+
+          {forgotStep === 0 ? (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              id="btn-forgot-pin-send-otp"
+              disabled={forgotLoading}
+              onClick={handleRequestForgotOtp}
+            >
+              {forgotLoading ? <span className="spinner spinner-sm" /> : null}
+              Gửi mã OTP
+            </button>
+          ) : (
+            <>
+              {receivedOtp && (
+                <div className="info-chip" style={{ justifyContent: 'space-between' }}>
+                  <span>
+                    <span style={{ color: 'var(--warning)', fontWeight: 800, marginRight: 8 }}>DEV OTP:</span>
+                    <span style={{ fontFamily: 'monospace', letterSpacing: 3 }}>{receivedOtp}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(receivedOtp);
+                      toast.success('Đã copy OTP!');
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label">Mã OTP (6 số)</label>
+                <input
+                  id="forgotPinOtp"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="form-input"
+                  placeholder="Nhập OTP"
+                  value={forgotForm.otp}
+                  onChange={(e) => setForgotForm({ ...forgotForm, otp: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">PIN mới (6 số)</label>
+                <input
+                  id="forgotPinNew"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="form-input"
+                  placeholder="••••••"
+                  value={forgotForm.newPin}
+                  onChange={(e) => setForgotForm({ ...forgotForm, newPin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Xác nhận PIN mới</label>
+                <input
+                  id="forgotPinConfirm"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="form-input"
+                  placeholder="••••••"
+                  value={forgotForm.confirmNewPin}
+                  onChange={(e) => setForgotForm({ ...forgotForm, confirmNewPin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                id="btn-forgot-pin-confirm"
+                disabled={forgotLoading}
+                onClick={handleConfirmForgotPin}
+              >
+                {forgotLoading ? <span className="spinner spinner-sm" /> : null}
+                Đặt lại mã PIN
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </form>
   );
 }
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(null);
+  const [hasPin, setHasPin] = useState(null);
+  const pinNoticeShownRef = useRef(false);
+
+  const searchParams = new URLSearchParams(location.search);
+  const defaultSection = searchParams.get('section');
+  const requirePin = searchParams.get('requirePin') === '1';
+
+  useEffect(() => {
+    if (defaultSection) setActiveSection(defaultSection);
+  }, [defaultSection]);
+
+  useEffect(() => {
+    if (!requirePin) return;
+    if (pinNoticeShownRef.current) return;
+    pinNoticeShownRef.current = true;
+    toast.error('Vui lòng thiết lập mã PIN trước khi giao dịch');
+
+    // clean up query so toast doesn't repeat if user navigates inside settings
+    const params = new URLSearchParams(location.search);
+    params.delete('requirePin');
+    navigate({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
+  }, [requirePin, location.pathname, location.search, navigate]);
+
+  const fetchPinStatus = useCallback(async () => {
+    try {
+      const res = await authApi.getPinStatus();
+      const v = res?.data?.hasPin ?? res?.hasPin;
+      setHasPin(Boolean(v));
+    } catch {
+      setHasPin(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPinStatus();
+  }, [fetchPinStatus]);
 
   const sections = [
     {
@@ -478,8 +700,8 @@ export default function SettingsPage() {
       id: "set-pin",
       icon: Shield,
       title: "Thiết lập mã PIN",
-      description: "Đặt mã PIN lần đầu",
-      content: <SetPinForm />,
+      description: hasPin ? <span className="badge badge-success">Đã thiết lập mã PIN</span> : "Đặt mã PIN lần đầu",
+      content: <SetPinForm onPinSet={fetchPinStatus} />,
     },
     {
       id: "change-pin",

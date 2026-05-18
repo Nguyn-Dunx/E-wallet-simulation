@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { transactionApi, walletApi } from '../api/client';
+import { authApi, transactionApi, walletApi } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import PinPad from '../components/PinPad';
 import { formatCurrency } from '../utils/format';
@@ -27,6 +27,24 @@ export default function TransferPage() {
   const currentBalance = wallet?.balance != null ? Number(wallet.balance) : null;
   const transferAmount = Number(form.amount) || 0;
   const balanceAfterTransfer = currentBalance != null ? currentBalance - transferAmount : null;
+
+  useEffect(() => {
+    let active = true;
+
+    authApi.getPinStatus()
+      .then((res) => {
+        if (!active) return;
+        const hasPin = res?.data?.hasPin ?? res?.hasPin;
+        if (!hasPin) navigate('/settings?section=set-pin&requirePin=1', { replace: true });
+      })
+      .catch(() => {
+        // ignore; transaction will fail on submit if PIN truly missing
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   useEffect(() => {
     let active = true;

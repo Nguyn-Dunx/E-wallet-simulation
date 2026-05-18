@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { walletApi, transactionApi } from '../api/client';
+import { authApi, walletApi, transactionApi } from '../api/client';
+import { useNavigate } from 'react-router-dom';
 import PinPad from '../components/PinPad';
 import { formatCurrency } from '../utils/format';
 import { ArrowDownLeft, DollarSign, ArrowRight, ChevronLeft, CheckCircle, XCircle } from 'lucide-react';
@@ -8,6 +9,7 @@ import './TransactionFlow.css';
 const STEPS = ['Nhập thông tin', 'Xác nhận', 'Nhập PIN', 'Kết quả'];
 
 export default function DepositPage() {
+  const navigate = useNavigate();
   const [step, setStep]     = useState(0);
   const [loading, setLoading] = useState(false);
   const [pin, setPin]       = useState('');
@@ -28,6 +30,23 @@ export default function DepositPage() {
   }, [sources.length]);
 
   useEffect(() => { loadSources(); }, [loadSources]);
+
+  useEffect(() => {
+    let active = true;
+    authApi.getPinStatus()
+      .then((res) => {
+        if (!active) return;
+        const hasPin = res?.data?.hasPin ?? res?.hasPin;
+        if (!hasPin) navigate('/settings?section=set-pin&requirePin=1', { replace: true });
+      })
+      .catch(() => {
+        // ignore
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   const validate = () => {
     const e = {};

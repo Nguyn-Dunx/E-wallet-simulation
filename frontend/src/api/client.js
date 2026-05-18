@@ -47,6 +47,9 @@ export const authApi = {
   changePassword: (body) => post('/auth/users/change-password', body),
   setPin:         (body) => post('/auth/users/set-pin', body),
   changePin:      (body) => post('/auth/users/change-pin', body),
+  getPinStatus:   ()     => get('/auth/users/pin-status'),
+  forgotPinCreateOtp: () => post('/auth/users/forgot-pin/create-otp'),
+  forgotPinConfirm:   (body) => post('/auth/users/forgot-pin/confirm', body),
 };
 
 // ─── Wallet ───────────────────────────────────────────────────────────────

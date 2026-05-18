@@ -12,9 +12,12 @@ import org.example.backend.modules.identity.common.enums.AccountStatus;
 import org.example.backend.modules.identity.common.enums.EkycStatus;
 import org.example.backend.modules.identity.common.enums.LoginType;
 import org.example.backend.modules.identity.common.enums.RoleName;
+import org.example.backend.modules.identity.common.enums.SmsLogType;
 import org.example.backend.modules.identity.common.utils.OtpUtils;
 import org.example.backend.modules.identity.dto.request.*;
 import org.example.backend.modules.identity.dto.response.CommandResponse;
+import org.example.backend.modules.identity.dto.response.PinStatusResponse;
+import org.example.backend.modules.identity.dto.response.ResetPasswordDTO;
 
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -42,6 +45,8 @@ public class AccountService {
     private final JwtUtils jwtUtils;
     private final TokenBlacklistService tokenBlacklistService;
     private final AdminRepository adminRepository;
+
+    private final SmsLogRepository smsLogRepository;
 
 
     private final ApplicationEventPublisher eventPublisher;
@@ -338,5 +343,64 @@ public class AccountService {
         accountRepository.save(account);
 
         return ApiResponse.success(HttpStatus.OK, "Transaction PIN changed successfully", null);
+    }
+
+    public ApiResponse<PinStatusResponse> getTransactionPinStatus(String loginKey) {
+        Account account = accountRepository.findAuthAccount(loginKey)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        return ApiResponse.success(HttpStatus.OK, null, new PinStatusResponse(account.getPinHash() != null));
+    }
+
+    @Transactional
+    public ApiResponse<ResetPasswordDTO> createOtpForForgotPin(String loginKey) {
+        Account account = accountRepository.findAuthAccount(loginKey)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (account.getUser() == null || account.getUser().getPhone() == null) {
+            throw new RuntimeException("Invalid user account");
+        }
+
+        String phone = account.getUser().getPhone();
+        String otpCode = otpUtils.createOtp();
+        smsLogRepository.save(
+                SmsLog.builder()
+                        .phone(phone)
+                        .otpCode(otpCode)
+                        .type(SmsLogType.RESET_PIN)
+                        .build()
+        );
+
+        return ApiResponse.success(HttpStatus.CONTINUE, "Sent otp to your phone numbers", new ResetPasswordDTO(otpCode));
+    }
+
+    @Transactional
+    public ApiResponse<String> confirmForgotPin(String loginKey, ConfirmForgotPinRequest request) {
+        if (!request.getNewPin().equals(request.getConfirmNewPin())) {
+            throw new IllegalArgumentException("New PIN and Confirm New PIN do not match");
+        }
+
+        Account account = accountRepository.findAuthAccount(loginKey)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (account.getUser() == null || account.getUser().getPhone() == null) {
+            throw new RuntimeException("Invalid user account");
+        }
+
+        String phone = account.getUser().getPhone();
+        SmsLog smsLog = smsLogRepository.findFirstByPhoneAndTypeOrderByCreatedAtDesc(phone, SmsLogType.RESET_PIN)
+                .orElseThrow(() -> new IllegalArgumentException("Not found any otp for this request"));
+
+        if (!smsLog.getOtpCode().equals(request.getOtp())) {
+            throw new IllegalArgumentException("Invalid otp code");
+        }
+        if (smsLog.getExpiredAt() != null && smsLog.getExpiredAt().isBefore(Instant.now())) {
+            throw new IllegalArgumentException("Otp expired");
+        }
+
+        account.setPinHash(passwordEncoder.encode(request.getNewPin()));
+        account.setPinFailedCount(0);
+        accountRepository.save(account);
+
+        return ApiResponse.success(HttpStatus.OK, "Transaction PIN reset successfully", null);
     }
 }

@@ -8,6 +8,8 @@ import org.example.backend.common.utils.JwtUtils;
 import org.example.backend.modules.identity.dto.request.*;
 import org.example.backend.modules.identity.dto.response.CommandResponse;
 import org.example.backend.modules.identity.dto.response.JwtResponse;
+import org.example.backend.modules.identity.dto.response.PinStatusResponse;
+import org.example.backend.modules.identity.dto.response.ResetPasswordDTO;
 import org.example.backend.modules.identity.services.AccountService;
 import org.example.backend.modules.identity.services.AuthService;
 import org.example.backend.security.UserDetailsImpl;
@@ -152,4 +154,26 @@ public class AuthController {
         ApiResponse<String> response = accountService.changeTransactionPin(userDetails.getUsername(), request);
         return ResponseEntity.ok(response);
     }
+
+        @GetMapping("/users/pin-status")
+        public ResponseEntity<ApiResponse<PinStatusResponse>> getTransactionPinStatus(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails
+        ) {
+                return ResponseEntity.ok(accountService.getTransactionPinStatus(userDetails.getUsername()));
+        }
+
+        @PostMapping("/users/forgot-pin/create-otp")
+        public ResponseEntity<ApiResponse<ResetPasswordDTO>> createOtpForForgotPin(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails
+        ) {
+                return ResponseEntity.ok(accountService.createOtpForForgotPin(userDetails.getUsername()));
+        }
+
+        @PostMapping("/users/forgot-pin/confirm")
+        public ResponseEntity<ApiResponse<String>> confirmForgotPin(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails,
+                        @Valid @RequestBody ConfirmForgotPinRequest request
+        ) {
+                return ResponseEntity.ok(accountService.confirmForgotPin(userDetails.getUsername(), request));
+        }
 }
