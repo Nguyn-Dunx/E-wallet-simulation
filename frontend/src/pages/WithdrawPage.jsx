@@ -252,7 +252,7 @@ export default function WithdrawPage() {
               <div className="result-amount">-{formatCurrency(form.amount)}</div>
               <button
                 className="btn btn-primary btn-full btn-lg"
-                onClick={() => { setStep(0); setForm({ sourceId: '', amount: '', description: '' }); setPin(''); setResult(null); }}
+                onClick={() => window.location.reload()}
                 id="btn-withdraw-again"
               >
                 Rut tien tiep

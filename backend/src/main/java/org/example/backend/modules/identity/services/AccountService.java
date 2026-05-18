@@ -48,7 +48,7 @@ public class AccountService {
 
     @Transactional
     public ApiResponse<String> initSignupUser(SignupUserRequest request) {
-        if (accountRepository.existsByLoginKeyIgnoreCase(request.getLoginKey())) {
+        if (accountRepository.existsByLoginKeyIgnoreCaseAndDeletedAtIsNull(request.getLoginKey())) {
             throw new ElementAlreadyExistsException("Account existed!");
         }
 
@@ -92,7 +92,45 @@ public class AccountService {
             throw new RuntimeException("Invalid Otp.");
         }
 
-        // 4. Mọi thứ hợp lệ -> Đưa vào bảng Account và User
+        // 4. Nếu account đã từng bị soft-delete (admin/user xoá), cho phép đăng ký lại bằng cách restore account đó
+        //    (tránh đụng unique constraint ở identity.users(phone) khi user chưa bị soft-delete đồng bộ)
+        Account softDeletedAccount = accountRepository
+                .findFirstByLoginKeyIgnoreCaseAndDeletedAtIsNotNullOrderByDeletedAtDesc(phone)
+                .orElse(null);
+
+        if (softDeletedAccount != null) {
+            softDeletedAccount.setDeletedAt(null);
+            softDeletedAccount.setStatus(AccountStatus.ACTIVE);
+            softDeletedAccount.setPasswordHash(pendingUser.getHashedPassword());
+            softDeletedAccount.setLoginFailedCount(0);
+            softDeletedAccount.setPinFailedCount(0);
+            softDeletedAccount.setTokenVersion(softDeletedAccount.getTokenVersion() + 1);
+            softDeletedAccount.setLoginType(LoginType.PHONE);
+
+            User user = softDeletedAccount.getUser();
+            if (user == null) {
+                User newUser = new User();
+                newUser.setFullName(pendingUser.getFullName());
+                newUser.setPhone(pendingUser.getPhoneNumber());
+                newUser.setEkycStatus(EkycStatus.UNVERIFIED);
+                newUser.setAccount(softDeletedAccount);
+                softDeletedAccount.setUser(newUser);
+            } else {
+                user.setDeletedAt(null);
+                user.setFullName(pendingUser.getFullName());
+                user.setPhone(pendingUser.getPhoneNumber());
+                if (user.getEkycStatus() == null) {
+                    user.setEkycStatus(EkycStatus.UNVERIFIED);
+                }
+            }
+
+            accountRepository.save(softDeletedAccount);
+            pendingUserRepository.delete(pendingUser);
+
+            return ApiResponse.success(HttpStatus.ACCEPTED, null, "Register successfully");
+        }
+
+        // 5. Mọi thứ hợp lệ -> Đưa vào bảng Account và User
         Account account = new Account();
         account.setLoginKey(pendingUser.getPhoneNumber());
         account.setPasswordHash(pendingUser.getHashedPassword());
@@ -123,7 +161,7 @@ public class AccountService {
 
     public CommandResponse signupAdmin(SignupAdminRequest request) {
 
-        if (accountRepository.existsByLoginKeyIgnoreCase(request.getLoginKey())) {
+        if (accountRepository.existsByLoginKeyIgnoreCaseAndDeletedAtIsNull(request.getLoginKey())) {
             throw new ElementAlreadyExistsException("Login key already exists");
         }
 
@@ -211,9 +249,13 @@ public class AccountService {
         Account account = accountRepository.findAuthAccount(request.loginKey())
                 .orElseThrow(() -> new RuntimeException("Not found account"));
         UUID userId = account.getUser().getId();
+        Instant deletedAt = Instant.now();
         account.setTokenVersion(account.getTokenVersion() + 1);
         account.setStatus(AccountStatus.DISABLED);
-        account.setDeletedAt(Instant.now());
+        account.setDeletedAt(deletedAt);
+        if (account.getUser() != null) {
+            account.getUser().setDeletedAt(deletedAt);
+        }
         accountRepository.save(account);
         UUID jti = jwtUtils.getJti(token);
         if (jti != null) {

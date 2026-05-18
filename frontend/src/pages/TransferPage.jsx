@@ -9,6 +9,8 @@ import './TransactionFlow.css';
 
 const STEPS = ['Nhập thông tin', 'Xác nhận', 'Nhập PIN', 'Kết quả'];
 
+const LAST_RECEIVER_STORAGE_KEY = 'ewallet.lastTransferReceiverLoginKey';
+
 export default function TransferPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -16,11 +18,11 @@ export default function TransferPage() {
   const [wallet, setWallet] = useState(null);
   const [pin, setPin] = useState('');
   const [result, setResult] = useState(null);
-  const [form, setForm] = useState({
-    receiverLoginKey: '',
+  const [form, setForm] = useState(() => ({
+    receiverLoginKey: sessionStorage.getItem(LAST_RECEIVER_STORAGE_KEY) || '',
     amount: '',
     description: '',
-  });
+  }));
   const [errors, setErrors] = useState({});
   const currentBalance = wallet?.balance != null ? Number(wallet.balance) : null;
   const transferAmount = Number(form.amount) || 0;
@@ -78,10 +80,18 @@ export default function TransferPage() {
         description: form.description,
         pin,
       });
+      const receiver = form.receiverLoginKey.trim();
+      if (receiver) sessionStorage.setItem(LAST_RECEIVER_STORAGE_KEY, receiver);
       setResult({ success: true, data: res.data || res });
     } catch (err) {
       setResult({ success: false, message: err.message });
     } finally { setLoading(false); }
+  };
+
+  const handleTransferAgain = () => {
+    const receiver = form.receiverLoginKey.trim();
+    if (receiver) sessionStorage.setItem(LAST_RECEIVER_STORAGE_KEY, receiver);
+    window.location.reload();
   };
 
   // Auto-submit when PIN is full
@@ -273,7 +283,7 @@ export default function TransferPage() {
                 <button className="btn btn-secondary btn-full" onClick={() => navigate('/history')} id="btn-view-history">
                   Xem lịch sử
                 </button>
-                <button className="btn btn-primary btn-full" onClick={() => { setStep(0); setForm({ receiverLoginKey: '', amount: '', description: '' }); setPin(''); setResult(null); }} id="btn-new-transfer">
+                <button className="btn btn-primary btn-full" onClick={handleTransferAgain} id="btn-new-transfer">
                   Chuyển lại
                 </button>
               </div>

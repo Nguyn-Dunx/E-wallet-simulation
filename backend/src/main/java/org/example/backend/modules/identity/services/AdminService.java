@@ -109,7 +109,11 @@ public class AdminService {
         Account account = getManageableUserAccount(accountId);
         account.setStatus(AccountStatus.DISABLED);
         account.setTokenVersion(account.getTokenVersion() + 1);
-        account.setDeletedAt(Instant.now());
+        Instant deletedAt = Instant.now();
+        account.setDeletedAt(deletedAt);
+        if (account.getUser() != null) {
+            account.getUser().setDeletedAt(deletedAt);
+        }
 
         Account saved = accountRepository.save(account);
         return ApiResponse.success(HttpStatus.OK, "Deleted account", AdminAccountResponse.from(saved));

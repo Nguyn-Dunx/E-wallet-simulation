@@ -44,5 +44,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
     @Query("SELECT a.status FROM Account a WHERE a.loginKey = :loginKey")
     Optional<AccountStatus> findStatusByLoginKey(@Param("loginKey") String loginKey);
 
-    boolean existsByLoginKeyIgnoreCase(@NotBlank(message = "{validation.auth.loginKey.required}") String loginKey);
+    boolean existsByLoginKeyIgnoreCaseAndDeletedAtIsNull(@NotBlank(message = "{validation.auth.loginKey.required}") String loginKey);
+
+    Optional<Account> findFirstByLoginKeyIgnoreCaseAndDeletedAtIsNotNullOrderByDeletedAtDesc(String loginKey);
 }
